@@ -157,3 +157,8 @@ impl BitVector {
     }
   }
 }
+
+#[test]
+fn create_and_print_bitvector() {
+  assert_eq!(BitVector::create_64(37, 62).to_string(), "".to_string())
+}
