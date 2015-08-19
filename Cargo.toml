@@ -1,0 +1,11 @@
+[package]
+
+name = "bap"
+version = "0.0.1"
+authors = [ "Matthew Maurer <maurer@matthewmaurer.org>" ]
+license = "MIT"
+description = "Rust bindings to BAP"
+repository = "https://github.com/maurer/bap-rust"
+
+[dependencies]
+libc = "*"
