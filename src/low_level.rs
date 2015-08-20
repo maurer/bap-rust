@@ -1,4 +1,31 @@
 use raw;
+use std::cell::RefCell;
+use std::sync::{Once, ONCE_INIT};
+use std::marker::PhantomData;
+
+#[allow(raw_pointer_derive)]
+#[derive(Clone)]
+pub struct Context {
+  stamp: PhantomData<*const Context>
+}
+
+thread_local!(static BAP_CTX: RefCell<Option<Context>> = RefCell::new(None));
+
+static BAP_INIT : Once = ONCE_INIT;
+
+pub fn init() -> Option<Context> {
+  BAP_INIT.call_once(|| {
+    unsafe {
+      raw::bap_init()
+    };
+    BAP_CTX.with(|ctx| {
+      *ctx.borrow_mut() = Some(Context { stamp : PhantomData });
+    })
+  });
+  BAP_CTX.with(|ctx| {
+    (*ctx.borrow()).clone()
+  })
+}
 
 macro_rules! abs_type {
   ($name:ident, $c_name:ident, $c_free_name:ident, $cap_name:ident) => {
@@ -151,7 +178,7 @@ impl ToString for BitVector {
 }
 
 impl BitVector {
-  pub fn create_64(val : u64, width : BitSize) -> Self {
+  pub fn create_64(_ctx : &Context, val : u64, width : BitSize) -> Self {
     unsafe {
       BitVector {raw : raw::bap_create_bitvector64(val as i64, width as i16)}
     }
@@ -160,6 +187,5 @@ impl BitVector {
 
 #[test]
 fn create_and_print_bitvector() {
-  unsafe {raw::bap_init()};
-  assert_eq!(&BitVector::create_64(37, 9).to_string(), "0x25:9")
+  assert_eq!(&BitVector::create_64(&init().unwrap(), 37, 9).to_string(), "0x25:9")
 }
