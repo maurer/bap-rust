@@ -16,7 +16,7 @@ macro_rules! abs_type {
         }
       }
     }
-    use self::$name::$cap_name;
+    pub use self::$name::$cap_name;
   };
 }
 
@@ -160,5 +160,6 @@ impl BitVector {
 
 #[test]
 fn create_and_print_bitvector() {
-  assert_eq!(BitVector::create_64(37, 62).to_string(), "".to_string())
+  unsafe {raw::bap_init()};
+  assert_eq!(&BitVector::create_64(37, 9).to_string(), "0x25:9")
 }

@@ -410,6 +410,7 @@ impl ::std::default::Default for Struct_Unnamed25 {
 pub type bap_stmt = Struct_bap_stmt;
 #[link(name = "bap")]
 extern "C" {
+    pub fn bap_init() -> ();
     pub fn bap_free_disasm(arg1: bap_disasm) -> ();
     pub fn bap_free_mem(arg1: bap_mem) -> ();
     pub fn bap_free_bigstring(arg1: bap_bigstring) -> ();
