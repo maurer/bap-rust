@@ -182,5 +182,6 @@ impl BitVector {
 
 #[test]
 fn create_and_print_bitvector() {
-  assert_eq!(&BitVector::create_64(&init().unwrap(), 37, 9).to_string(), "0x25:9")
+  assert_eq!(&BitVector::create_64(&init().unwrap(), 37, 9).to_string(),
+             "0x25:9")
 }
