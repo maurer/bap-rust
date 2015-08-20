@@ -29,21 +29,16 @@ pub fn init() -> Option<Context> {
 
 macro_rules! abs_type {
   ($name:ident, $c_name:ident, $c_free_name:ident, $cap_name:ident) => {
-    mod $name {
-      use raw;
-      pub type Raw = raw::$c_name;
-      pub struct $cap_name {
-        pub raw : Raw
-      }
-      impl Drop for $cap_name {
-        fn drop(&mut self) ->() {
-          unsafe {
-            raw::$c_free_name(self.raw);
-          }
+    pub struct $cap_name {
+      raw : raw::$c_name
+    }
+    impl Drop for $cap_name {
+      fn drop(&mut self) ->() {
+        unsafe {
+          raw::$c_free_name(self.raw);
         }
       }
     }
-    pub use self::$name::$cap_name;
   };
 }
 
