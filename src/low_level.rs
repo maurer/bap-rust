@@ -86,6 +86,17 @@ pub enum Arch {
   X86_64
 }
 
+impl Arch {
+  fn to_bap(&self) -> raw::bap_arch {
+    use self::Arch::*;
+    match *self {
+      ARM    => raw::BAP_ARM,
+      X86    => raw::BAP_X86,
+      X86_64 => raw::BAP_X86_64
+    }
+  }
+}
+
 pub type BitSize = u16;
 
 pub enum Type {
@@ -251,6 +262,42 @@ impl MemRegion {
   }
 }
 
+impl Disasm {
+  pub fn mem(_ctx  : &Context,
+             roots : Vec<Addr>,
+             arch  : Arch,
+             mem   : MemRegion) -> Self {
+    Disasm {
+      raw : unsafe {
+        let mut roots_backing = Vec::new();
+        let roots_ptr = if roots.len() == 0 {
+            ::std::ptr::null_mut()
+          } else {
+            for root in roots {
+              roots_backing.push(root.raw);
+            }
+            roots_backing.push(::std::ptr::null_mut());
+            roots_backing.as_mut_ptr()
+          };
+        raw::bap_disasm_mem(roots_ptr,
+                            arch.to_bap(),
+                            mem.raw)
+      }
+    }
+  }
+  pub fn to_string(&self, _ctx : &Context) -> String {
+    unsafe {
+      use std::ffi::CStr;
+      use libc::types::common::c95::c_void;
+      let ptr = raw::bap_disasm_to_string(self.raw);
+      let res = String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes())
+                .into_owned();
+      raw::bap_free(ptr as *mut c_void);
+      res
+    }
+  }
+}
+
 #[test]
 fn create_and_print_bitvector() {
   with_bap(|ctx| {
@@ -267,5 +314,17 @@ fn create_and_print_mem() {
     let bs = BigString::new(&ctx, shell);
     let mem = MemRegion::new(&ctx, &bs, 0, shell.len(), Endian::Little, &base);
     assert_eq!(&mem.to_string(&ctx), "00000020  31 C0 50 68 2F 2F 73 68 68 2F 62 69 6E 89 E3 50 |1.Ph//shh/bin..P|\n00000030  53 89 E1 99 B0 0B CD 80                         |S.......        |\n")
+  })
+}
+
+#[test]
+fn create_and_disasm_mem() {
+  with_bap(|ctx| {
+    let base = BitVector::create_64(&ctx, 32, 64);
+    let shell = b"\x31\xc0\x50\x68//sh\x68/bin\x89\xe3\x50\x53\x89\xe1\x99\xb0\x0b\xcd\x80";
+    let bs = BigString::new(&ctx, shell);
+    let mem = MemRegion::new(&ctx, &bs, 0, shell.len(), Endian::Little, &base);
+    let disas = Disasm::mem(&ctx, Vec::new(), Arch::X86, mem);
+    assert_eq!(&disas.to_string(&ctx), "xorl %eax, %eax; XOR32rr(EAX,EAX,EAX)\npushl %eax; PUSH32r(EAX)\npushl $0x68732f2f; PUSHi32(0x68732f2f)\npushl $0x6e69622f; PUSHi32(0x6e69622f)\nmovl %esp, %ebx; MOV32rr(EBX,ESP)\npushl %eax; PUSH32r(EAX)\npushl %ebx; PUSH32r(EBX)\nmovl %esp, %ecx; MOV32rr(ECX,ESP)\ncltd; CDQ()\nmovb $0xb, %al; MOV8ri(AL,0xb)\nint $-0x80; INT(-0x80)\n")
   })
 }
