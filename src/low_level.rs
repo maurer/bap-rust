@@ -74,6 +74,20 @@ pub type Addr = BitVector;
 abs_type!(insn, bap_insn, bap_free_insn, Instruction);
 abs_type!(bigstring, bap_bigstring, bap_free_bigstring, BigString);
 
+pub struct DisasmInsn {
+  pub start : Addr,
+  pub end   : Addr,
+  pub insn  : Instruction
+}
+
+impl DisasmInsn {
+  pub fn to_string(&self, ctx : &Context) -> String {
+    format!("{} -> {}: {}", self.start.to_string(ctx),
+                            self.end.to_string(ctx),
+                            self.insn.to_string(ctx))
+  }
+}
+
 pub enum Endian {
   Little,
   Big
@@ -262,6 +276,22 @@ impl MemRegion {
   }
 }
 
+impl Instruction {
+  pub fn to_string(&self, _ctx : &Context) -> String {
+    unsafe {
+      use std::ffi::CStr;
+      use libc::types::common::c95::c_void;
+      let ptr = raw::bap_insn_to_asm(self.raw);
+      let res = String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes())
+                .into_owned();
+      raw::bap_free(ptr as *mut c_void);
+      res
+    }
+  }
+}
+
+
+
 impl Disasm {
   pub fn mem(_ctx  : &Context,
              roots : Vec<Addr>,
@@ -296,6 +326,22 @@ impl Disasm {
       res
     }
   }
+  pub fn instructions(&self, _ctx : &Context) -> Vec<DisasmInsn> {
+    unsafe {
+      let narr = raw::bap_disasm_get_insns(self.raw);
+      let mut index = 0;
+      let mut res = Vec::new();
+      while !(*narr.offset(index)).is_null() {
+        res.push(DisasmInsn {
+          start : BitVector { raw : (**narr.offset(index)).start },
+          end   : BitVector { raw : (**narr.offset(index)).end },
+          insn  : Instruction { raw : (**narr.offset(index)).insn}
+        });
+        index += 1;
+      }
+      res
+    }
+  }
 }
 
 #[test]
@@ -326,5 +372,18 @@ fn create_and_disasm_mem() {
     let mem = MemRegion::new(&ctx, &bs, 0, shell.len(), Endian::Little, &base);
     let disas = Disasm::mem(&ctx, Vec::new(), Arch::X86, mem);
     assert_eq!(&disas.to_string(&ctx), "xorl %eax, %eax; XOR32rr(EAX,EAX,EAX)\npushl %eax; PUSH32r(EAX)\npushl $0x68732f2f; PUSHi32(0x68732f2f)\npushl $0x6e69622f; PUSHi32(0x6e69622f)\nmovl %esp, %ebx; MOV32rr(EBX,ESP)\npushl %eax; PUSH32r(EAX)\npushl %ebx; PUSH32r(EBX)\nmovl %esp, %ecx; MOV32rr(ECX,ESP)\ncltd; CDQ()\nmovb $0xb, %al; MOV8ri(AL,0xb)\nint $-0x80; INT(-0x80)\n")
+  })
+}
+
+#[test]
+fn iter_insns() {
+  with_bap(|ctx| {
+    let base = BitVector::create_64(&ctx, 32, 64);
+    let shell = b"\x31\xc0\x50\x68//sh\x68/bin\x89\xe3\x50\x53\x89\xe1\x99\xb0\x0b\xcd\x80";
+    let bs = BigString::new(&ctx, shell);
+    let mem = MemRegion::new(&ctx, &bs, 0, shell.len(), Endian::Little, &base);
+    let disas = Disasm::mem(&ctx, Vec::new(), Arch::X86, mem);
+    let insns = disas.instructions(&ctx);
+    assert_eq!(insns[2].to_string(&ctx), "0x23:64 -> 0x27:64: pushl $0x68732f2f")
   })
 }
