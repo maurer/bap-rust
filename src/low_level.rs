@@ -9,16 +9,33 @@ pub struct Context {
 
 impl Drop for Context {
   fn drop(&mut self) {
+    unsafe {raw::bap_release()}
+  }
+}
+
+struct ThreadContext {
+  stamp: PhantomData<*const ThreadContext>
+}
+
+impl Drop for ThreadContext {
+  fn drop(&mut self) {
     unsafe {assert!(raw::bap_thread_unregister())}
   }
 }
 
-thread_local!(static BAP_CTX : RefCell<Option<Context>> = RefCell::new(None));
+impl ThreadContext {
+  fn lock(&self) -> Context {
+    unsafe {raw::bap_acquire()}
+    Context { stamp : PhantomData }
+  }
+}
+thread_local!(static BAP_CTX : RefCell<Option<ThreadContext>> =
+                     RefCell::new(None));
 thread_local!(static BAP_THREAD_REGISTER : Once = ONCE_INIT);
 static BAP_INIT : Once = ONCE_INIT;
 
 pub fn with_bap<A, F>(f : F) -> A
-  where F : Fn(&Context) -> A {
+  where F : Fn(Context) -> A {
   BAP_THREAD_REGISTER.with(|t| {
     let t = unsafe {
       //with has too tight a bound on the functions, cast the reference
@@ -31,7 +48,7 @@ pub fn with_bap<A, F>(f : F) -> A
           raw::bap_release();
         }
         BAP_CTX.with(|ctx| {
-          *ctx.borrow_mut() = Some(Context { stamp : PhantomData });
+          *ctx.borrow_mut() = Some(ThreadContext { stamp : PhantomData });
         })
       });
       BAP_CTX.with(|ctx| {
@@ -40,7 +57,7 @@ pub fn with_bap<A, F>(f : F) -> A
           Some(_) => (),
           None => {
             unsafe {assert!(raw::bap_thread_register())};
-            *r = Some(Context { stamp : PhantomData })
+            *r = Some(ThreadContext { stamp : PhantomData })
           }
         }
       })
@@ -48,13 +65,8 @@ pub fn with_bap<A, F>(f : F) -> A
   });
   BAP_CTX.with(|ctx| {
     match *ctx.borrow() {
-      Some(ref c) => {
-        unsafe {raw::bap_acquire()};
-        let r = f(c);
-        unsafe {raw::bap_release()};
-        r
-      },
-      None    => panic!("Empty context?")
+      Some(ref c) => f(c.lock()),
+      None => panic!("No context?")
     }
   })
 }
@@ -245,12 +257,25 @@ impl MemRegion {
       }
     }
   }
+  pub fn to_string(&self, _ctx : &Context) -> String {
+    unsafe {
+      use std::ffi::CStr;
+      use libc::types::common::c95::c_void;
+      let ptr = raw::bap_mem_to_string(self.raw);
+      println!("tostr'd");
+      let res = String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes())
+                .into_owned();
+      println!("copied");
+      raw::bap_free(ptr as *mut c_void);
+      res
+    }
+  }
 }
 
 #[test]
 fn create_and_print_bitvector() {
   with_bap(|ctx| {
-    assert_eq!(&BitVector::create_64(ctx, 37, 9).to_string(ctx),
+    assert_eq!(&BitVector::create_64(&ctx, 37, 9).to_string(&ctx),
                "0x25:9")
   })
 }
@@ -258,10 +283,10 @@ fn create_and_print_bitvector() {
 #[test]
 fn create_and_print_mem() {
   with_bap(|ctx| {
-    let base = BitVector::create_64(ctx, 32, 64);
+    let base = BitVector::create_64(&ctx, 32, 64);
     let shell = b"\x31\xc0\x50\x68//sh\x68/bin\x89\xe3\x50\x53\x89\xe1\x99\xb0\x0b\xcd\x80";
-    let bs = BigString::new(ctx, shell);
-    let mem = MemRegion::new(ctx, &bs, 0, shell.len(), Endian::Little, &base);
-    ()
+    let bs = BigString::new(&ctx, shell);
+    let mem = MemRegion::new(&ctx, &bs, 0, shell.len(), Endian::Little, &base);
+    assert_eq!(&mem.to_string(&ctx), "00000020  31 C0 50 68 2F 2F 73 68 68 2F 62 69 6E 89 E3 50 |1.Ph//shh/bin..P|\n00000030  53 89 E1 99 B0 0B CD 80                         |S.......        |\n")
   })
 }
