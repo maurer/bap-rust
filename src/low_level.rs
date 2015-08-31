@@ -1,5 +1,4 @@
 use raw;
-use std::cell::RefCell;
 use std::sync::{Once, ONCE_INIT};
 use std::marker::PhantomData;
 
@@ -28,46 +27,28 @@ impl ThreadContext {
     unsafe {raw::bap_acquire()}
     Context { stamp : PhantomData }
   }
+  unsafe fn init() -> Self {
+    let mut bap_init_ran = false;
+    BAP_INIT.call_once(|| {
+      raw::bap_init();
+      raw::bap_release();
+      bap_init_ran = true;
+    });
+    if !bap_init_ran {
+      assert!(raw::bap_thread_register());
+    }
+    ThreadContext { stamp : PhantomData }
+  }
 }
-thread_local!(static BAP_CTX : RefCell<Option<ThreadContext>> =
-                     RefCell::new(None));
-thread_local!(static BAP_THREAD_REGISTER : Once = ONCE_INIT);
+
+
+thread_local!(static BAP_CTX : ThreadContext = unsafe {ThreadContext::init()});
 static BAP_INIT : Once = ONCE_INIT;
 
 pub fn with_bap<A, F>(f : F) -> A
   where F : Fn(Context) -> A {
-  BAP_THREAD_REGISTER.with(|t| {
-    let t = unsafe {
-      //with has too tight a bound on the functions, cast the reference
-      ::std::mem::transmute::<&Once, &'static Once>(t)
-    };
-    t.call_once(|| {
-      BAP_INIT.call_once(|| {
-        unsafe {
-          raw::bap_init();
-          raw::bap_release();
-        }
-        BAP_CTX.with(|ctx| {
-          *ctx.borrow_mut() = Some(ThreadContext { stamp : PhantomData });
-        })
-      });
-      BAP_CTX.with(|ctx| {
-        let mut r = ctx.borrow_mut();
-        match *r {
-          Some(_) => (),
-          None => {
-            unsafe {assert!(raw::bap_thread_register())};
-            *r = Some(ThreadContext { stamp : PhantomData })
-          }
-        }
-      })
-    })
-  });
-  BAP_CTX.with(|ctx| {
-    match *ctx.borrow() {
-      Some(ref c) => f(c.lock()),
-      None => panic!("No context?")
-    }
+ BAP_CTX.with(|ctx| {
+    f(ctx.lock())
   })
 }
 
@@ -262,10 +243,8 @@ impl MemRegion {
       use std::ffi::CStr;
       use libc::types::common::c95::c_void;
       let ptr = raw::bap_mem_to_string(self.raw);
-      println!("tostr'd");
       let res = String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes())
                 .into_owned();
-      println!("copied");
       raw::bap_free(ptr as *mut c_void);
       res
     }
