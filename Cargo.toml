@@ -9,3 +9,5 @@ repository = "https://github.com/maurer/bap-rust"
 
 [dependencies]
 libc = "*"
+num = "*"
+enum_primitive = "*"

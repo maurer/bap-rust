@@ -1,6 +1,7 @@
 use raw;
 use std::sync::{Once, ONCE_INIT};
 use std::marker::PhantomData;
+use num::FromPrimitive;
 
 pub struct Context {
   stamp: PhantomData<*const Context>
@@ -118,13 +119,41 @@ pub enum Type {
   Memory{addr_size : BitSize, cell_size : BitSize}
 }
 
+impl Type {
+  unsafe fn of_bap(typ : *mut raw::bap_type) -> Type {
+    let mut typ = *typ;
+    match typ.kind {
+      raw::BAP_TYPE_IMM => Type::BitVector(*typ.imm() as BitSize),
+      raw::BAP_TYPE_MEM => Type::Memory {
+          addr_size : (*typ.mem()).addr_size as BitSize,
+          cell_size : (*typ.mem()).cell_size as BitSize
+      },
+      x => panic!("Unknown type kind: {}", x)
+    }
+  }
+}
+
 pub struct Var {
   pub name    : String,
   pub typ     : Type,
   pub tmp     : bool,
-  pub version : i64,
+  pub version : u64,
 }
 
+impl Var {
+  unsafe fn of_bap(var : *mut raw::bap_var) -> Self {
+    use std::ffi::CStr;
+    let var = *var;
+    Var {
+      name    : String::from_utf8_lossy(CStr::from_ptr(var.name).to_bytes()).into_owned(),
+      typ     : Type::of_bap(var._type),
+      tmp     : var.tmp != 0,
+      version : var.version as u64
+    }
+  }
+}
+
+enum_from_primitive! {
 pub enum BinOp {
   Plus,
   Minus,
@@ -146,17 +175,22 @@ pub enum BinOp {
   SignedLessThan,
   SignedLessThanEqual
 }
+}
 
+enum_from_primitive! {
 pub enum UnOp {
   ArithmeticNegation,
   BinaryNegation
 }
+}
 
+enum_from_primitive! {
 pub enum CastKind {
   Unsigned,
   Signed,
   HighBits,
   LowBits
+}
 }
 
 pub enum Expr {
@@ -164,7 +198,6 @@ pub enum Expr {
   BitVector(BitVector),
   Load       {memory       : Box<Expr>,
               index        : Box<Expr>,
-              value        : Box<Expr>,
               endian       : Endian,
               size         : BitSize},
   Store      {memory       : Box<Expr>,
@@ -191,8 +224,72 @@ pub enum Expr {
   Extract    {low_bit      : BitSize,
               high_bit     : BitSize,
               arg          : Box<Expr>},
-  Concat     {low          : BitSize,
-              high         : BitSize}
+  Concat     {low          : Box<Expr>,
+              high         : Box<Expr>}
+}
+
+impl Expr {
+  unsafe fn of_bap(expr : *mut raw::bap_expr) -> Self {
+    let mut expr = *expr;
+    match expr.kind {
+      raw::BAP_EXPR_LOAD    => Expr::Load {
+        memory : Box::new(Expr::of_bap((*expr.load()).memory)),
+        index  : Box::new(Expr::of_bap((*expr.load()).index)),
+        endian : Endian::of_bap((*expr.load()).endian),
+        size   : (*expr.load()).size as BitSize
+      },
+      raw::BAP_EXPR_STORE   => Expr::Store {
+        memory : Box::new(Expr::of_bap((*expr.store()).memory)),
+        index  : Box::new(Expr::of_bap((*expr.store()).index)),
+        value  : Box::new(Expr::of_bap((*expr.store()).value)),
+        endian : Endian::of_bap((*expr.store()).endian),
+        size   : (*expr.store()).size as BitSize
+      },
+      raw::BAP_EXPR_BINOP   => Expr::BinOp {
+        op  : BinOp::from_u32((*expr.binop()).op).unwrap(),
+        lhs : Box::new(Expr::of_bap((*expr.binop()).lhs)),
+        rhs : Box::new(Expr::of_bap((*expr.binop()).rhs))
+      },
+      raw::BAP_EXPR_UNOP    => Expr::UnOp {
+        op  : UnOp::from_u32((*expr.unop()).op).unwrap(),
+        arg : Box::new(Expr::of_bap((*expr.unop()).arg))
+      },
+      raw::BAP_EXPR_VAR     => Expr::Var(Var::of_bap(*expr.var())),
+      raw::BAP_EXPR_IMM     => Expr::BitVector(BitVector::of_bap(*expr.imm())),
+      raw::BAP_EXPR_CAST    => Expr::Cast {
+        kind  : CastKind::from_u32((*expr.cast())._type).unwrap(),
+        width : (*expr.cast()).width as BitSize,
+        val   : Box::new(Expr::of_bap((*expr.cast()).val))
+      },
+      raw::BAP_EXPR_LET     => Expr::Let {
+        bound_var  : Var::of_bap((*expr._let()).bound_var),
+        bound_expr : Box::new(Expr::of_bap((*expr._let()).bound_expr)),
+        body_expr  : Box::new(Expr::of_bap((*expr._let()).body_expr))
+      },
+      raw::BAP_EXPR_UNK     => Expr::Unknown {
+        description :
+          String::from_utf8_lossy(
+            ::std::ffi::CStr::from_ptr((*expr.unknown()).descr).to_bytes())
+          .into_owned(),
+        typ : Type::of_bap((*expr.unknown())._type)
+      },
+      raw::BAP_EXPR_ITE     => Expr::IfThenElse {
+        cond         : Box::new(Expr::of_bap((*expr.ite()).cond)),
+        true_branch  : Box::new(Expr::of_bap((*expr.ite()).t)),
+        false_branch : Box::new(Expr::of_bap((*expr.ite()).f))
+      },
+      raw::BAP_EXPR_EXTRACT => Expr::Extract {
+        arg      : Box::new(Expr::of_bap((*expr.extract()).val)),
+        high_bit : (*expr.extract()).high_bit as BitSize,
+        low_bit  : (*expr.extract()).low_bit as BitSize
+      },
+      raw::BAP_EXPR_CONCAT  => Expr::Concat {
+        low  : Box::new(Expr::of_bap((*expr.concat()).low)),
+        high : Box::new(Expr::of_bap((*expr.concat()).high))
+      },
+      x => panic!("Unknown expr kind {}", x)
+    }
+  }
 }
 
 pub enum Stmt {
@@ -206,6 +303,42 @@ pub enum Stmt {
   IfThenElse {cond        : Expr,
               then_clause : Vec<Stmt>,
               else_clause : Vec<Stmt>}
+}
+
+impl Stmt {
+  unsafe fn of_bap(stmt : *mut raw::bap_stmt) -> Self {
+    use std::ffi::CStr;
+    let mut stmt = *stmt;
+    match stmt.kind {
+      raw::BAP_STMT_MOVE => Stmt::Move {
+        lhs : Var::of_bap((*stmt._move()).lhs),
+        rhs : Expr::of_bap((*stmt._move()).rhs)
+      },
+      raw::BAP_STMT_JMP => Stmt::Jump(Expr::of_bap(*stmt.jmp())),
+      raw::BAP_STMT_SPECIAL => Stmt::Special(String::from_utf8_lossy(
+              CStr::from_ptr(*stmt.special()).to_bytes()).into_owned()),
+      raw::BAP_STMT_WHILE => Stmt::While {
+          cond : Expr::of_bap((*stmt.s_while()).cond),
+          body : Stmt::of_stmts((*stmt.s_while()).body)
+      },
+      raw::BAP_STMT_IF => Stmt::IfThenElse {
+          cond : Expr::of_bap((*stmt.ite()).cond),
+          then_clause : Stmt::of_stmts((*stmt.ite()).t),
+          else_clause : Stmt::of_stmts((*stmt.ite()).f)
+      },
+      raw::BAP_STMT_CPU_EXN => Stmt::CPUException(*stmt.cpu_exn() as u64),
+      n => panic!("Unknown statement type: {}", n)
+    }
+  }
+  unsafe fn of_stmts(stmts : *mut *mut raw::bap_stmt) -> Vec<Self> {
+    let mut index = 0;
+    let mut res = Vec::new();
+    while !(*stmts.offset(index)).is_null() {
+      res.push(Stmt::of_bap(*stmts.offset(index)));
+      index += 1;
+    }
+    res
+  }
 }
 
 impl BitVector {
@@ -225,6 +358,9 @@ impl BitVector {
       res
     }
   }
+  unsafe fn of_bap(raw : raw::bap_bitvector) -> Self {
+    BitVector { raw : raw }
+  }
 }
 
 impl BigString {
@@ -243,6 +379,13 @@ impl Endian {
     match *self {
       Endian::Little => raw::BAP_LITTLE_ENDIAN,
       Endian::Big    => raw::BAP_BIG_ENDIAN
+    }
+  }
+  fn of_bap(e : raw::bap_endian) -> Self {
+    match e {
+      raw::BAP_LITTLE_ENDIAN => Endian::Little,
+      raw::BAP_BIG_ENDIAN => Endian::Big,
+      x => panic!("Unknown endian value: {}", x)
     }
   }
 }
@@ -287,6 +430,12 @@ impl Instruction {
       raw::bap_free(ptr as *mut c_void);
       res
     }
+  }
+  pub fn stmts(&self, _ctx : &Context) -> Vec<Stmt> {
+    unsafe {
+      let narr = raw::bap_insn_get_stmts(self.raw);
+      Stmt::of_stmts(narr)
+   }
   }
 }
 
