@@ -89,12 +89,14 @@ impl DisasmInsn {
   }
 }
 
+#[derive(Copy, Clone)]
 pub enum Endian {
   Little,
   Big
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Copy, Clone)]
 pub enum Arch {
   ARM,
   X86,
