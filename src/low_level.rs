@@ -23,6 +23,10 @@ impl Drop for ThreadContext {
   }
 }
 
+unsafe fn bap_free<T>(arg : *mut T) {
+  raw::bap_free(arg as *mut ::libc::c_void)
+}
+
 impl ThreadContext {
   fn lock(&self) -> Context {
     unsafe {raw::bap_acquire()}
@@ -431,16 +435,30 @@ impl BitVector {
   pub fn to_string(&self, _ctx : &Context) -> String {
     unsafe {
       use std::ffi::CStr;
-      use libc::types::common::c95::c_void;
       let ptr = raw::bap_bitvector_to_string(self.raw);
       let res = String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes())
                 .into_owned();
-      raw::bap_free(ptr as *mut c_void);
+      bap_free(ptr);
       res
     }
   }
   unsafe fn of_bap(raw : raw::bap_bitvector) -> Self {
     BitVector { raw : raw }
+  }
+  pub fn contents(&self, ctx : &Context) -> Vec<u8> {
+    unsafe {
+      let ptr = raw::bap_bitvector_contents(self.raw);
+      let byte_count = (self.width(ctx) / 8) as isize;
+      let mut res = Vec::new();
+      for i in 0..(byte_count - 1) {
+        res.push(*(ptr.offset(i)) as u8);
+      };
+      bap_free(ptr);
+      res
+    }
+  }
+  pub fn width(&self, _ctx : &Context) -> BitSize {
+    unsafe {raw::bap_bitvector_size(self.raw) as BitSize}
   }
 }
 
@@ -490,11 +508,10 @@ impl MemRegion {
   pub fn to_string(&self, _ctx : &Context) -> String {
     unsafe {
       use std::ffi::CStr;
-      use libc::types::common::c95::c_void;
       let ptr = raw::bap_mem_to_string(self.raw);
       let res = String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes())
                 .into_owned();
-      raw::bap_free(ptr as *mut c_void);
+      bap_free(ptr);
       res
     }
   }
@@ -504,11 +521,10 @@ impl Instruction {
   pub fn to_string(&self, _ctx : &Context) -> String {
     unsafe {
       use std::ffi::CStr;
-      use libc::types::common::c95::c_void;
       let ptr = raw::bap_insn_to_asm(self.raw);
       let res = String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes())
                 .into_owned();
-      raw::bap_free(ptr as *mut c_void);
+      bap_free(ptr);
       res
     }
   }
@@ -548,11 +564,10 @@ impl Disasm {
   pub fn to_string(&self, _ctx : &Context) -> String {
     unsafe {
       use std::ffi::CStr;
-      use libc::types::common::c95::c_void;
       let ptr = raw::bap_disasm_to_string(self.raw);
       let res = String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes())
                 .into_owned();
-      raw::bap_free(ptr as *mut c_void);
+      bap_free(ptr);
       res
     }
   }
@@ -561,6 +576,7 @@ impl Disasm {
       let narr = raw::bap_disasm_get_insns(self.raw);
       let mut index = 0;
       let mut res = Vec::new();
+      //TODO this leaks the container structure, what to do?
       while !(*narr.offset(index)).is_null() {
         res.push(DisasmInsn {
           start : BitVector { raw : (**narr.offset(index)).start },

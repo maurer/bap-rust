@@ -425,6 +425,10 @@ extern "C" {
     pub fn bap_disasm_to_string(arg1: bap_disasm) -> *mut ::libc::c_char;
     pub fn bap_bitvector_to_string(arg1: bap_bitvector)
      -> *mut ::libc::c_char;
+    pub fn bap_bitvector_size(arg1: bap_bitvector)
+     -> ::libc::size_t;
+    pub fn bap_bitvector_contents(arg1: bap_bitvector)
+     -> *mut ::libc::c_char;
     pub fn bap_mem_to_string(arg1: bap_mem) -> *mut ::libc::c_char;
     pub fn bap_insn_to_asm(arg1: bap_insn) -> *mut ::libc::c_char;
     pub fn bap_bigstring_length(arg1: bap_bigstring) -> size_t;
