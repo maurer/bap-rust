@@ -401,6 +401,27 @@ impl Stmt<BitVector> {
   }
 }
 
+impl <BV> Stmt<BV> {
+  pub fn map_bv<BV2, F>(&self, f : &F) -> Stmt<BV2>
+    where F : Fn(&BV) -> BV2 {
+    match *self {
+      Stmt::Jump(ref e) => Stmt::Jump(e.map_bv(f)),
+      Stmt::Special(ref s) => Stmt::Special(s.clone()),
+      Stmt::CPUException(n) => Stmt::CPUException(n),
+      Stmt::Move {ref lhs, ref rhs} =>
+          Stmt::Move {lhs : lhs.clone(),
+                      rhs : rhs.map_bv(f)},
+      Stmt::While {ref cond, ref body} => Stmt::While
+        {cond : cond.map_bv(f),
+         body : body.iter().map(|x|{x.map_bv(f)}).collect()},
+      Stmt::IfThenElse {ref cond, ref then_clause, ref else_clause} =>
+        Stmt::IfThenElse
+        {cond        : cond.map_bv(f),
+         then_clause : then_clause.iter().map(|x|{x.map_bv(f)}).collect(),
+         else_clause : else_clause.iter().map(|x|{x.map_bv(f)}).collect()}
+    }
+  }
+}
 impl BitVector {
   pub fn create_64(_ctx : &Context, val : u64, width : BitSize) -> Self {
     unsafe {
