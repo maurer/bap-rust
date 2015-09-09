@@ -116,6 +116,7 @@ impl Arch {
 
 pub type BitSize = u16;
 
+#[derive(Copy, Clone)]
 pub enum Type {
   BitVector(BitSize),
   Memory{addr_size : BitSize, cell_size : BitSize}
@@ -135,6 +136,7 @@ impl Type {
   }
 }
 
+#[derive(Clone)]
 pub struct Var {
   pub name    : String,
   pub typ     : Type,
@@ -156,6 +158,7 @@ impl Var {
 }
 
 enum_from_primitive! {
+#[derive(Copy, Clone)]
 pub enum BinOp {
   Plus,
   Minus,
@@ -180,6 +183,7 @@ pub enum BinOp {
 }
 
 enum_from_primitive! {
+#[derive(Copy, Clone)]
 pub enum UnOp {
   ArithmeticNegation,
   BinaryNegation
@@ -187,6 +191,7 @@ pub enum UnOp {
 }
 
 enum_from_primitive! {
+#[derive(Copy, Clone)]
 pub enum CastKind {
   Unsigned,
   Signed,
@@ -195,42 +200,95 @@ pub enum CastKind {
 }
 }
 
-pub enum Expr {
+pub enum Expr<BV> {
   Var(Var),
-  BitVector(BitVector),
-  Load       {memory       : Box<Expr>,
-              index        : Box<Expr>,
+  BitVector(BV),
+  Load       {memory       : Box<Expr<BV>>,
+              index        : Box<Expr<BV>>,
               endian       : Endian,
               size         : BitSize},
-  Store      {memory       : Box<Expr>,
-              index        : Box<Expr>,
-              value        : Box<Expr>,
+  Store      {memory       : Box<Expr<BV>>,
+              index        : Box<Expr<BV>>,
+              value        : Box<Expr<BV>>,
               endian       : Endian,
               size         : BitSize},
   BinOp      {op           : BinOp,
-              lhs          : Box<Expr>,
-              rhs          : Box<Expr>},
+              lhs          : Box<Expr<BV>>,
+              rhs          : Box<Expr<BV>>},
   UnOp       {op           : UnOp,
-              arg          : Box<Expr>},
+              arg          : Box<Expr<BV>>},
   Cast       {kind         : CastKind,
               width        : BitSize,
-              val          : Box<Expr>},
+              val          : Box<Expr<BV>>},
   Let        {bound_var    : Var,
-              bound_expr   : Box<Expr>,
-              body_expr    : Box<Expr>},
+              bound_expr   : Box<Expr<BV>>,
+              body_expr    : Box<Expr<BV>>},
   Unknown    {description  : String,
               typ          : Type},
-  IfThenElse {cond         : Box<Expr>,
-              true_branch  : Box<Expr>,
-              false_branch : Box<Expr>},
+  IfThenElse {cond         : Box<Expr<BV>>,
+              true_branch  : Box<Expr<BV>>,
+              false_branch : Box<Expr<BV>>},
   Extract    {low_bit      : BitSize,
               high_bit     : BitSize,
-              arg          : Box<Expr>},
-  Concat     {low          : Box<Expr>,
-              high         : Box<Expr>}
+              arg          : Box<Expr<BV>>},
+  Concat     {low          : Box<Expr<BV>>,
+              high         : Box<Expr<BV>>}
 }
 
-impl Expr {
+impl <BV> Expr<BV> {
+  pub fn map_bv<BV2, F>(&self, f : &F) -> Expr<BV2>
+    where F : Fn(&BV) -> BV2 {
+    match *self {
+      Expr::BitVector(ref bv) => Expr::BitVector(f(bv)),
+      Expr::Load       {ref memory, ref index, endian, size}
+        => Expr::Load {memory : Box::new(memory.map_bv(f)),
+                       index  : Box::new(index.map_bv(f)),
+                       endian : endian,
+                       size   : size},
+      Expr::Store      {ref memory, ref index, ref value, endian, size}
+        => Expr::Store {memory : Box::new(memory.map_bv(f)),
+                        index  : Box::new(index.map_bv(f)),
+                        value  : Box::new(value.map_bv(f)),
+                        endian : endian,
+                        size   : size},
+      Expr::BinOp      {op, ref lhs, ref rhs}
+        => Expr::BinOp {op  : op,
+                        lhs : Box::new(lhs.map_bv(f)),
+                        rhs : Box::new(rhs.map_bv(f))},
+      Expr::UnOp       {op, ref arg}
+        => Expr::UnOp  {op  : op,
+                        arg : Box::new(arg.map_bv(f))},
+      Expr::Cast       {kind, width, ref val}
+        => Expr::Cast  {kind  : kind,
+                        width : width,
+                        val   : Box::new(val.map_bv(f))},
+      Expr::Let        {ref bound_var, ref bound_expr, ref body_expr}
+        => Expr::Let   {bound_var  : bound_var.clone(),
+                        bound_expr : Box::new(bound_expr.map_bv(f)),
+                        body_expr  : Box::new(body_expr.map_bv(f))},
+      Expr::IfThenElse {ref cond, ref true_branch, ref false_branch}
+        => Expr::IfThenElse
+                       {cond         : Box::new(cond.map_bv(f)),
+                        true_branch  : Box::new(true_branch.map_bv(f)),
+                        false_branch : Box::new(false_branch.map_bv(f))},
+      Expr::Extract    {low_bit, high_bit, ref arg}
+        => Expr::Extract
+                       {low_bit  : low_bit,
+                        high_bit : high_bit,
+                        arg      : Box::new(arg.map_bv(f))},
+      Expr::Concat     {ref low, ref high}
+        => Expr::Concat
+                       {low  : Box::new(low.map_bv(f)),
+                        high : Box::new(high.map_bv(f))},
+      Expr::Unknown    {ref description, typ}
+        => Expr::Unknown {description : description.clone(),
+                          typ         : typ},
+      Expr::Var(ref v) => Expr::Var(v.clone())
+    }
+  }
+}
+
+impl Expr<BitVector> {
   unsafe fn of_bap(expr : *mut raw::bap_expr) -> Self {
     let mut expr = *expr;
     match expr.kind {
@@ -294,20 +352,20 @@ impl Expr {
   }
 }
 
-pub enum Stmt {
-  Jump(Expr),
+pub enum Stmt<BV> {
+  Jump(Expr<BV>),
   Special(String),
   CPUException(u64),
   Move       {lhs         : Var,
-              rhs         : Expr},
-  While      {cond        : Expr,
-              body        : Vec<Stmt>},
-  IfThenElse {cond        : Expr,
-              then_clause : Vec<Stmt>,
-              else_clause : Vec<Stmt>}
+              rhs         : Expr<BV>},
+  While      {cond        : Expr<BV>,
+              body        : Vec<Stmt<BV>>},
+  IfThenElse {cond        : Expr<BV>,
+              then_clause : Vec<Stmt<BV>>,
+              else_clause : Vec<Stmt<BV>>}
 }
 
-impl Stmt {
+impl Stmt<BitVector> {
   unsafe fn of_bap(stmt : *mut raw::bap_stmt) -> Self {
     use std::ffi::CStr;
     let mut stmt = *stmt;
@@ -433,7 +491,7 @@ impl Instruction {
       res
     }
   }
-  pub fn stmts(&self, _ctx : &Context) -> Vec<Stmt> {
+  pub fn stmts(&self, _ctx : &Context) -> Vec<Stmt<BitVector>> {
     unsafe {
       let narr = raw::bap_insn_get_stmts(self.raw);
       Stmt::of_stmts(narr)

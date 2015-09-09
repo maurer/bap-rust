@@ -11,7 +11,7 @@ use low_level as ll;
 
 pub fn lift(addr : u64, width : BitSize,
         endian : Endian, arch : Arch,
-        bin : &[u8]) -> Vec<(ll::BitVector, ll::BitVector, Vec<Stmt>)> {
+        bin : &[u8]) -> Vec<(ll::BitVector, ll::BitVector, Vec<Stmt<ll::BitVector>>)> {
   ll::with_bap(|ctx| {
     let base  = ll::BitVector::create_64(&ctx, addr, width);
     let bs    = ll::BigString::new(&ctx, bin);
