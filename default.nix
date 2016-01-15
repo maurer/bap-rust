@@ -2,4 +2,4 @@
 
 with pkgs;
 
-callPackage (import ./package.nix) { }
+lib.allCall (import ./package.nix) { }

@@ -617,7 +617,7 @@ fn create_and_disasm_mem() {
     let bs = BigString::new(&ctx, shell);
     let mem = MemRegion::new(&ctx, &bs, 0, shell.len(), Endian::Little, &base);
     let disas = Disasm::mem(&ctx, Vec::new(), Arch::X86, mem);
-    assert_eq!(&disas.to_string(&ctx), "xorl %eax, %eax; XOR32rr(EAX,EAX,EAX)\npushl %eax; PUSH32r(EAX)\npushl $0x68732f2f; PUSHi32(0x68732f2f)\npushl $0x6e69622f; PUSHi32(0x6e69622f)\nmovl %esp, %ebx; MOV32rr(EBX,ESP)\npushl %eax; PUSH32r(EAX)\npushl %ebx; PUSH32r(EBX)\nmovl %esp, %ecx; MOV32rr(ECX,ESP)\ncltd; CDQ()\nmovb $0xb, %al; MOV8ri(AL,0xb)\nint $-0x80; INT(-0x80)\n")
+    assert_eq!(&disas.to_string(&ctx), "XOR32rr(EAX,EAX,EAX)\nPUSH32r(EAX)\nPUSHi32(0x68732f2f)\nPUSHi32(0x6e69622f)\nMOV32rr(EBX,ESP)\nPUSH32r(EAX)\nPUSH32r(EBX)\nMOV32rr(ECX,ESP)\nCDQ()\nMOV8ri(AL,0xb)\nINT(-0x80)\n")
   })
 }
 
