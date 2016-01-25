@@ -1,7 +1,9 @@
 use raw;
+use libc::size_t;
 use std::sync::{Once, ONCE_INIT};
 use std::marker::PhantomData;
 use num::FromPrimitive;
+use std::ffi::CStr;
 
 pub struct Context {
   stamp: PhantomData<*const Context>
@@ -19,7 +21,7 @@ struct ThreadContext {
 
 impl Drop for ThreadContext {
   fn drop(&mut self) {
-    unsafe {assert!(raw::bap_thread_unregister())}
+    unsafe {assert!(raw::bap_thread_unregister() != 0)}
   }
 }
 
@@ -40,7 +42,7 @@ impl ThreadContext {
       bap_init_ran = true;
     });
     if !bap_init_ran {
-      assert!(raw::bap_thread_register());
+      assert!(raw::bap_thread_register() != 0);
     }
     ThreadContext { stamp : PhantomData }
   }
@@ -93,6 +95,158 @@ impl DisasmInsn {
   }
 }
 
+pub struct Segment {
+  pub name : String,
+  pub r : bool,
+  pub w : bool,
+  pub x : bool,
+  pub mem : MemRegion
+}
+
+impl Segment {
+  pub fn from_file_contents(_ctx : &Context, contents : &[u8]) -> Vec<Self> {
+    unsafe {
+      let raw_segs = raw::bap_get_segments(
+        contents.as_ptr() as *mut ::libc::c_char,
+        contents.len() as size_t);
+      let mut index = 0;
+      let mut res = Vec::new();
+      while !(*raw_segs.offset(index)).is_null() {
+        {
+          let cur = &(**raw_segs.offset(index));
+          res.push(Segment {
+            name : (String::from_utf8_lossy(CStr::from_ptr(cur.name).to_bytes()))
+                     .into_owned(),
+            r    : cur.r != 0,
+            w    : cur.w != 0,
+            x    : cur.x != 0,
+            mem  : MemRegion::of_bap(cur.mem),
+          });
+        }
+        bap_free(*raw_segs.offset(index));
+        index += 1;
+      }
+      bap_free(raw_segs);
+      res
+    }
+  }
+
+  pub fn to_string(&self, ctx : &Context) -> String {
+    format!("{}|{}{}{}\n{}", self.name,
+                             if self.r {"r"} else {""},
+                             if self.w {"w"} else {""},
+                             if self.x {"x"} else {""},
+                             self.mem.to_string(ctx))
+  }
+}
+
+#[test]
+fn extract_segments() {
+  let buf = include_bytes!("../test_data/elf_x86");
+  with_bap(|ctx| {
+    let segs = Segment::from_file_contents(&ctx, buf);
+    assert_eq!(segs.len(), 2);
+    assert!(segs[0].r);
+    assert!(!segs[0].w);
+    assert!(segs[0].x);
+    assert!(segs[1].r);
+    assert!(!segs[1].x);
+    assert!(segs[1].w);
+  })
+}
+
+pub struct Symbol {
+  pub name  : String,
+  pub func  : bool,
+  pub debug : bool,
+  pub start : Addr,
+  pub end   : Option<Addr>
+}
+
+impl Symbol {
+  pub fn from_file_contents(_ctx : &Context, contents : &[u8]) -> Vec<Self> {
+    unsafe {
+      let raw_syms = raw::bap_get_symbols(
+        contents.as_ptr() as *mut ::libc::c_char,
+        contents.len() as size_t);
+      let mut index = 0;
+      let mut res = Vec::new();
+      while !(*raw_syms.offset(index)).is_null() {
+        {
+          let cur = &(**raw_syms.offset(index));
+          res.push(Symbol {
+            name  : (String::from_utf8_lossy(CStr::from_ptr(cur.name).to_bytes()))
+                     .into_owned(),
+            func  : cur.func != 0,
+            debug : cur.debug != 0,
+            start : BitVector::of_bap(cur.start),
+            end   : Some(BitVector::of_bap(cur.end)),
+          });
+        }
+        bap_free(*raw_syms.offset(index));
+        index += 1;
+      }
+      bap_free(raw_syms);
+      res
+    }
+  }
+  pub fn byteweight(ctx : &Context, arch : Arch, mem : &MemRegion) -> Vec<Self> {
+    unsafe {
+      let raw_addrs = raw::bap_byteweight(arch.to_bap(), mem.raw);
+      let mut index = 0;
+      let mut res = Vec::new();
+      while !(*raw_addrs.offset(index)).is_null() {
+        {
+          let cur = *raw_addrs.offset(index);
+          let addr = BitVector::of_bap(cur);
+          let name = format!("byteweight_{}", addr.to_string(ctx));
+          res.push(Symbol {
+            name  : name,
+            func  : true,
+            debug : false,
+            start : addr,
+            end   : None,
+          });
+        }
+        index += 1;
+      }
+      bap_free(raw_addrs);
+      res
+    }
+  }
+  pub fn to_string(&self, ctx : &Context) -> String {
+    format!("{}|{},{}|{}->{}", self.name,
+                             if self.func {"func"} else {"data"},
+                             if self.debug {"debug"} else {"nodebug"},
+                             self.start.to_string(ctx),
+                             match self.end {
+                               Some(ref end) => end.to_string(ctx),
+                               None => "?".to_string()
+                             })
+  }
+}
+
+#[test]
+fn extract_symbols() {
+  let buf = include_bytes!("../test_data/elf_x86");
+  with_bap(|ctx| {
+    let syms = Symbol::from_file_contents(&ctx, buf);
+    let main_sym = syms.iter().filter(|x| {x.name == "main"}).next().unwrap();
+    let f_sym = syms.iter().filter(|x| {x.name == "f"}).next().unwrap();
+    assert!(main_sym.func);
+    assert!(f_sym.func);
+  })
+}
+
+#[test]
+fn run_byteweight() {
+  let buf = include_bytes!("../test_data/elf_x86");
+  with_bap(|ctx| {
+    let segs = Segment::from_file_contents(&ctx, buf);
+    let _syms : Vec<Symbol> = segs.iter().flat_map(|seg| {Symbol::byteweight(&ctx, Arch::X86, &seg.mem)}).collect();
+  })
+}
+
 #[derive(Copy, Clone)]
 pub enum Endian {
   Little,
@@ -110,10 +264,11 @@ pub enum Arch {
 impl Arch {
   fn to_bap(&self) -> raw::bap_arch {
     use self::Arch::*;
+    use raw::Enum_bap_arch::*;
     match *self {
-      ARM    => raw::BAP_ARM,
-      X86    => raw::BAP_X86,
-      X86_64 => raw::BAP_X86_64
+      ARM    => BAP_ARM,
+      X86    => BAP_X86,
+      X86_64 => BAP_X86_64
     }
   }
 }
@@ -128,14 +283,14 @@ pub enum Type {
 
 impl Type {
   unsafe fn of_bap(typ : *mut raw::bap_type) -> Type {
+    use raw::Enum_bap_type_kind::*;
     let mut typ = *typ;
     match typ.kind {
-      raw::BAP_TYPE_IMM => Type::BitVector(*typ.imm() as BitSize),
-      raw::BAP_TYPE_MEM => Type::Memory {
+      BAP_TYPE_IMM => Type::BitVector(*typ.imm() as BitSize),
+      BAP_TYPE_MEM => Type::Memory {
           addr_size : (*typ.mem()).addr_size as BitSize,
           cell_size : (*typ.mem()).cell_size as BitSize
       },
-      x => panic!("Unknown type kind: {}", x)
     }
   }
 }
@@ -150,7 +305,6 @@ pub struct Var {
 
 impl Var {
   unsafe fn of_bap(var : *mut raw::bap_var) -> Self {
-    use std::ffi::CStr;
     let var = *var;
     Var {
       name    : String::from_utf8_lossy(CStr::from_ptr(var.name).to_bytes()).into_owned(),
@@ -294,64 +448,64 @@ impl <BV> Expr<BV> {
 
 impl Expr<BitVector> {
   unsafe fn of_bap(expr : *mut raw::bap_expr) -> Self {
+    use raw::Enum_bap_expr_kind::*;
     let mut expr = *expr;
     match expr.kind {
-      raw::BAP_EXPR_LOAD    => Expr::Load {
+      BAP_EXPR_LOAD    => Expr::Load {
         memory : Box::new(Expr::of_bap((*expr.load()).memory)),
         index  : Box::new(Expr::of_bap((*expr.load()).index)),
         endian : Endian::of_bap((*expr.load()).endian),
         size   : (*expr.load()).size as BitSize
       },
-      raw::BAP_EXPR_STORE   => Expr::Store {
+      BAP_EXPR_STORE   => Expr::Store {
         memory : Box::new(Expr::of_bap((*expr.store()).memory)),
         index  : Box::new(Expr::of_bap((*expr.store()).index)),
         value  : Box::new(Expr::of_bap((*expr.store()).value)),
         endian : Endian::of_bap((*expr.store()).endian),
         size   : (*expr.store()).size as BitSize
       },
-      raw::BAP_EXPR_BINOP   => Expr::BinOp {
-        op  : BinOp::from_u32((*expr.binop()).op).unwrap(),
+      BAP_EXPR_BINOP   => Expr::BinOp {
+        op  : BinOp::from_u32((*expr.binop()).op as u32).unwrap(),
         lhs : Box::new(Expr::of_bap((*expr.binop()).lhs)),
         rhs : Box::new(Expr::of_bap((*expr.binop()).rhs))
       },
-      raw::BAP_EXPR_UNOP    => Expr::UnOp {
-        op  : UnOp::from_u32((*expr.unop()).op).unwrap(),
+      BAP_EXPR_UNOP    => Expr::UnOp {
+        op  : UnOp::from_u32((*expr.unop()).op as u32).unwrap(),
         arg : Box::new(Expr::of_bap((*expr.unop()).arg))
       },
-      raw::BAP_EXPR_VAR     => Expr::Var(Var::of_bap(*expr.var())),
-      raw::BAP_EXPR_IMM     => Expr::BitVector(BitVector::of_bap(*expr.imm())),
-      raw::BAP_EXPR_CAST    => Expr::Cast {
-        kind  : CastKind::from_u32((*expr.cast())._type).unwrap(),
+      BAP_EXPR_VAR     => Expr::Var(Var::of_bap(*expr.var())),
+      BAP_EXPR_IMM     => Expr::BitVector(BitVector::of_bap(*expr.imm())),
+      BAP_EXPR_CAST    => Expr::Cast {
+        kind  : CastKind::from_u32((*expr.cast())._type as u32).unwrap(),
         width : (*expr.cast()).width as BitSize,
         val   : Box::new(Expr::of_bap((*expr.cast()).val))
       },
-      raw::BAP_EXPR_LET     => Expr::Let {
+      BAP_EXPR_LET     => Expr::Let {
         bound_var  : Var::of_bap((*expr._let()).bound_var),
         bound_expr : Box::new(Expr::of_bap((*expr._let()).bound_expr)),
         body_expr  : Box::new(Expr::of_bap((*expr._let()).body_expr))
       },
-      raw::BAP_EXPR_UNK     => Expr::Unknown {
+      BAP_EXPR_UNK     => Expr::Unknown {
         description :
           String::from_utf8_lossy(
             ::std::ffi::CStr::from_ptr((*expr.unknown()).descr).to_bytes())
           .into_owned(),
         typ : Type::of_bap((*expr.unknown())._type)
       },
-      raw::BAP_EXPR_ITE     => Expr::IfThenElse {
+      BAP_EXPR_ITE     => Expr::IfThenElse {
         cond         : Box::new(Expr::of_bap((*expr.ite()).cond)),
         true_branch  : Box::new(Expr::of_bap((*expr.ite()).t)),
         false_branch : Box::new(Expr::of_bap((*expr.ite()).f))
       },
-      raw::BAP_EXPR_EXTRACT => Expr::Extract {
+      BAP_EXPR_EXTRACT => Expr::Extract {
         arg      : Box::new(Expr::of_bap((*expr.extract()).val)),
         high_bit : (*expr.extract()).high_bit as BitSize,
         low_bit  : (*expr.extract()).low_bit as BitSize
       },
-      raw::BAP_EXPR_CONCAT  => Expr::Concat {
+      BAP_EXPR_CONCAT  => Expr::Concat {
         low  : Box::new(Expr::of_bap((*expr.concat()).low)),
         high : Box::new(Expr::of_bap((*expr.concat()).high))
       },
-      x => panic!("Unknown expr kind {}", x)
     }
   }
 }
@@ -372,26 +526,26 @@ pub enum Stmt<BV> {
 impl Stmt<BitVector> {
   unsafe fn of_bap(stmt : *mut raw::bap_stmt) -> Self {
     use std::ffi::CStr;
+    use raw::Enum_bap_stmt_kind::*;
     let mut stmt = *stmt;
     match stmt.kind {
-      raw::BAP_STMT_MOVE => Stmt::Move {
+      BAP_STMT_MOVE => Stmt::Move {
         lhs : Var::of_bap((*stmt._move()).lhs),
         rhs : Expr::of_bap((*stmt._move()).rhs)
       },
-      raw::BAP_STMT_JMP => Stmt::Jump(Expr::of_bap(*stmt.jmp())),
-      raw::BAP_STMT_SPECIAL => Stmt::Special(String::from_utf8_lossy(
+      BAP_STMT_JMP => Stmt::Jump(Expr::of_bap(*stmt.jmp())),
+      BAP_STMT_SPECIAL => Stmt::Special(String::from_utf8_lossy(
               CStr::from_ptr(*stmt.special()).to_bytes()).into_owned()),
-      raw::BAP_STMT_WHILE => Stmt::While {
+      BAP_STMT_WHILE => Stmt::While {
           cond : Expr::of_bap((*stmt.s_while()).cond),
           body : Stmt::of_stmts((*stmt.s_while()).body)
       },
-      raw::BAP_STMT_IF => Stmt::IfThenElse {
+      BAP_STMT_IF => Stmt::IfThenElse {
           cond : Expr::of_bap((*stmt.ite()).cond),
           then_clause : Stmt::of_stmts((*stmt.ite()).t),
           else_clause : Stmt::of_stmts((*stmt.ite()).f)
       },
-      raw::BAP_STMT_CPU_EXN => Stmt::CPUException(*stmt.cpu_exn() as u64),
-      n => panic!("Unknown statement type: {}", n)
+      BAP_STMT_CPU_EXN => Stmt::CPUException(*stmt.cpu_exn() as u64),
     }
   }
   unsafe fn of_stmts(stmts : *mut *mut raw::bap_stmt) -> Vec<Self> {
@@ -466,8 +620,8 @@ impl BigString {
   pub fn new(_ctx : &Context, buf : &[u8]) -> BigString {
     BigString {
       raw : unsafe {
-        raw::bap_create_bigstring(buf.as_ptr(),
-                                  buf.len() as raw::bindings_compat::size_t)
+        raw::bap_create_bigstring(buf.as_ptr() as *mut ::libc::c_char,
+                                  buf.len() as size_t)
       }
     }
   }
@@ -475,26 +629,32 @@ impl BigString {
 
 impl Endian {
   fn to_bap(&self) -> raw::bap_endian {
+    use raw::Enum_bap_endian::*;
     match *self {
-      Endian::Little => raw::BAP_LITTLE_ENDIAN,
-      Endian::Big    => raw::BAP_BIG_ENDIAN
+      Endian::Little => BAP_LITTLE_ENDIAN,
+      Endian::Big    => BAP_BIG_ENDIAN
     }
   }
   fn of_bap(e : raw::bap_endian) -> Self {
+    use raw::Enum_bap_endian::*;
     match e {
-      raw::BAP_LITTLE_ENDIAN => Endian::Little,
-      raw::BAP_BIG_ENDIAN => Endian::Big,
-      x => panic!("Unknown endian value: {}", x)
+      BAP_LITTLE_ENDIAN => Endian::Little,
+      BAP_BIG_ENDIAN => Endian::Big,
     }
   }
+}
+
+pub struct MemLocal {
+  pub start : Addr,
+  pub end   : Addr,
+  pub data  : Vec<u8>
 }
 
 impl MemRegion {
   pub fn new(_ctx : &Context,
              bs : &BigString,
              off : usize, len : usize,
-             endian : Endian, addr : &Addr) -> MemRegion {
-    use raw::bindings_compat::size_t;
+             endian : Endian, addr : &Addr) -> Self {
     MemRegion {
       raw : unsafe {
         raw::bap_create_mem(off as size_t,
@@ -515,6 +675,19 @@ impl MemRegion {
       res
     }
   }
+  pub fn project(&self, _ctx : &Context) -> MemLocal {
+    unsafe {
+      let p = &(*raw::bap_project_mem(self.raw));
+      MemLocal {
+        start : BitVector::of_bap(p.start),
+        end   : BitVector::of_bap(p.end),
+        data  : ::std::slice::from_raw_parts(p.data, p.len as usize).iter().map(|x| {*x as u8}).collect()
+      }
+    }
+  }
+  unsafe fn of_bap(raw : raw::bap_mem) -> Self {
+    MemRegion { raw : raw }
+  }
 }
 
 impl Instruction {
@@ -532,11 +705,12 @@ impl Instruction {
     unsafe {
       let narr = raw::bap_insn_get_stmts(self.raw);
       Stmt::of_stmts(narr)
-   }
+    }
+  }
+  unsafe fn of_bap(raw : raw::bap_insn) -> Self {
+    Instruction { raw : raw }
   }
 }
-
-
 
 impl Disasm {
   pub fn mem(_ctx  : &Context,
@@ -576,15 +750,16 @@ impl Disasm {
       let narr = raw::bap_disasm_get_insns(self.raw);
       let mut index = 0;
       let mut res = Vec::new();
-      //TODO this leaks the container structure, what to do?
       while !(*narr.offset(index)).is_null() {
         res.push(DisasmInsn {
-          start : BitVector { raw : (**narr.offset(index)).start },
-          end   : BitVector { raw : (**narr.offset(index)).end },
-          insn  : Instruction { raw : (**narr.offset(index)).insn}
+          start : BitVector::of_bap((**narr.offset(index)).start),
+          end   : BitVector::of_bap((**narr.offset(index)).end),
+          insn  : Instruction::of_bap((**narr.offset(index)).insn)
         });
+        bap_free(*narr.offset(index));
         index += 1;
       }
+      bap_free(narr);
       res
     }
   }

@@ -28,8 +28,77 @@ impl BitVector {
     }
   }
 }
+pub type Addr = BitVector;
 
 pub type Stmt = ll::Stmt<BitVector>;
+
+pub struct Symbol {
+  pub name  : String,
+  pub func  : bool,
+  pub debug : bool,
+  pub start : Addr,
+  pub end   : Option<Addr>
+}
+
+impl Symbol {
+  pub fn of_bap(ctx : &ll::Context, sym : &ll::Symbol) -> Self {
+    Symbol {
+      name  : sym.name.clone(),
+      func  : sym.func,
+      debug : sym.debug,
+      start : BitVector::of_bap(ctx, &sym.start),
+      end   : sym.end.as_ref().map(|bv| {
+        BitVector::of_bap(ctx, &bv)
+      })
+    }
+  }
+  pub fn from_file_contents(contents : &[u8]) -> Vec<Self> {
+    ll::with_bap(|ctx| {
+      ll::Symbol::from_file_contents(&ctx, contents).iter().map(|sym|{Symbol::of_bap(&ctx, sym)}).collect()
+    })
+  }
+}
+
+pub struct Segment {
+  pub name : String,
+  pub r : bool,
+  pub w : bool,
+  pub x : bool,
+  pub start : Addr,
+  pub end : Addr,
+  pub data : Vec<u8>
+}
+
+
+impl Segment {
+  pub fn from_file_contents(contents : &[u8]) -> Vec<Self> {
+    ll::with_bap(|ctx| {
+      let ll_segs = ll::Segment::from_file_contents(&ctx, contents);
+      ll_segs.iter().map(|ll_seg| {
+        let mem_local = ll_seg.mem.project(&ctx);
+        Segment {
+          name  : ll_seg.name.clone(),
+          r     : ll_seg.r,
+          w     : ll_seg.w,
+          x     : ll_seg.x,
+          start : BitVector::of_bap(&ctx, &mem_local.start),
+          end   : BitVector::of_bap(&ctx, &mem_local.end),
+          data  : mem_local.data
+        }
+      }).collect()
+    })
+  }
+  pub fn byteweight(&self, arch : Arch) -> Vec<Symbol> {
+    ll::with_bap(|ctx| {
+      let base  = self.start.to_bap(&ctx);
+      let bs    = ll::BigString::new(&ctx, &self.data);
+      //TODO track endianness in segments
+      let mem   = ll::MemRegion::new(&ctx, &bs, 0, self.data.len(), Endian::Little, &base);
+      let ll_syms = ll::Symbol::byteweight(&ctx, arch, &mem);
+      ll_syms.iter().map(|sym|{Symbol::of_bap(&ctx, &sym)}).collect()
+    })
+  }
+}
 
 pub fn lift(addr : &BitVector,
             endian : Endian, arch : Arch,
