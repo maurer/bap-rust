@@ -1,0 +1,71 @@
+language: rust
+cache:
+  directories:
+    - $HOME/.opam
+    - $HOME/.cache/pip
+before_cache:
+  - rm -rf $HOME/.opam/log
+before_script:
+  # Install libbap
+  - opam init -y
+  - eval `opam config env`
+  - opam pin add core_kernel 112.17.00 -y
+  - opam pin add bap --dev-repo -y
+  - opam install -y oasis
+  - cd libbap
+  - oasis setup
+  - make
+  - make install
+  - cd ..
+  # Fetch travis-cargo
+  - |
+      pip install 'travis-cargo<0.2' --user &&
+      export PATH=$HOME/.local/bin:$PATH
+
+sudo: false
+addons:
+  postgresql: 9.3
+  apt:
+    sources:
+    - avsm
+    packages:
+    - camlp4
+    - camlp4-extra
+    - clang
+    - curl
+    - libcurl4-gnutls-dev
+    - libgmp-dev
+    - libssl-dev
+    - libzip-dev
+    - llvm
+    - llvm-3.4-dev
+    - m4
+    - ocaml
+    - ocaml-base
+    - ocaml-base-nox
+    - ocaml-compiler-libs
+    - ocaml-native-compilers
+    - ocaml-nox
+    - time
+    - opam
+    - aspcud
+
+rust:
+  - nightly
+  - beta
+  - stable
+
+script:
+  - travis-cargo build
+  - travis-cargo test
+  - travis-cargo bench
+  - travis-cargo --only stable doc
+
+after_success:
+  - travis-cargo coveralls --no-sudo --verify
+  - travis-cargo --only stable doc-upload
+
+env:
+  global:
+    - TRAVIS_CARGO_NIGHTLY_FEATURE=""
+    - secure: "NEgBVKwxpPPtpIbSVTtSB7fUtVFrjE6FleFv3jwPRVZSYiINl7N9r5EmgB1Rb60KCLndD7kbguOjoABvVhpwR5zbS8GybgMa/iWrdr36sRGooFzEO+ItH2z659lUh6af8YF8C2f0DsdpOG8GV4mO0pmeA3bGOHyLAboNiB6RQQphogcBMolJ0P+y9WPBIvyoyTKK2H4H4/tpGOuZ82ijc2Eq0FIgQBWdNsYdPbUUvuMnmt7SY3rRvfVtibbl1NvywMttjQri/g2UKh0H+foDGVWJP99lYIcsWp/IiwzmRfCknOLIYrFLn/u3qBybN6NiJgatQbDflxhgxgTv5QkeIXvx2/wsHqP2HZZAxaIKKYwQ7QlEZiEeYxXa+dNttVTOuheU7ENmPocU0+HMZgphdsh36qvphSHKbAaJZEF5GopQ6zbLa0ZVjvSUR+LN8zoH6JZPA4nS4NI/gzvM1g0VdOuBZU64PRmHHCeUK6RCuBQP01XBbfgCFcWGgSl/BiIPwN7b7q/GtzHhfPQVqL6egY1JG3+j+xZkJAU/aRh6RaX2euqT6NHUaGQjBUTmf92LuDHsq8AfyWSZI8eXBr1RoYwLeqedn3ljMoEmbmAOi5K054zHlPSLikOC5/1oWsojHJt4nYoZyjqOfOxdweVRxoreqtVKJP1B7MhSvbDSHfA="

@@ -1,0 +1,3 @@
+[submodule "libbap"]
+	path = libbap
+	url = https://github.com/maurer/libbap
