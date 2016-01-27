@@ -1,5 +1,5 @@
 use raw;
-use libc::size_t;
+use raw::size_t;
 use std::sync::{Once, ONCE_INIT};
 use std::marker::PhantomData;
 use num::FromPrimitive;
