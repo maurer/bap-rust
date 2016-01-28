@@ -11,6 +11,7 @@ use num::traits::ToPrimitive;
 
 use low_level as ll;
 
+#[derive(Clone)]
 pub struct BitVector {
   pub val   : BigUint,
   pub width : BitSize
