@@ -141,6 +141,16 @@ impl Segment {
 }
 
 #[test]
+fn extract_arch() {
+  let x86_buf = include_bytes!("../test_data/elf_x86");
+  let x86_64_buf = include_bytes!("../test_data/elf_x86_64");
+  with_bap(|ctx| {
+    assert_eq!(Arch::from_file_contents(x86_buf, &ctx), Arch::X86);
+    assert_eq!(Arch::from_file_contents(x86_64_buf, &ctx), Arch::X86_64);
+  })
+}
+
+#[test]
 fn extract_segments() {
   let buf = include_bytes!("../test_data/elf_x86");
   with_bap(|ctx| {
@@ -254,7 +264,7 @@ pub enum Endian {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Arch {
   ARM,
   X86,
@@ -270,6 +280,21 @@ impl Arch {
       X86    => BAP_X86,
       X86_64 => BAP_X86_64
     }
+  }
+  fn of_bap(raw : raw::bap_arch) -> Self {
+    use self::Arch::*;
+    use raw::Enum_bap_arch::*;
+    match raw {
+      BAP_ARM    => ARM,
+      BAP_X86    => X86,
+      BAP_X86_64 => X86_64
+    }
+  }
+  pub fn from_file_contents(contents : &[u8], _ctx : &Context) -> Self {
+    Self::of_bap(unsafe {
+      raw::bap_get_arch(contents.as_ptr() as *mut ::libc::c_char,
+                        contents.len() as size_t)
+    })
   }
 }
 

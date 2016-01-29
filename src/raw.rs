@@ -51,11 +51,11 @@ pub type bap_bitvector = *mut ::libc::c_void;
 pub type bap_insn = *mut ::libc::c_void;
 pub type bap_addr = bap_bitvector;
 #[derive(Clone, Copy)]
-#[repr(u32)]
+#[repr(u64)]
 pub enum Enum_bap_arch {
     BAP_ARM = 9698489,
     BAP_X86 = 11960045,
-    BAP_X86_64 = 1166334129,
+    BAP_X86_64 = 0xffffffffba7b274f,
 }
 pub type bap_arch = Enum_bap_arch;
 #[derive(Clone, Copy)]
@@ -523,6 +523,7 @@ extern "C" {
     pub fn bap_free_segment(arg1: *mut bap_segment);
     pub fn bap_render_stmt(arg1: *mut bap_stmt) -> *mut ::libc::c_char;
     pub fn bap_disasm_to_string(arg1: bap_disasm) -> *mut ::libc::c_char;
+    pub fn bap_arch_to_string(arg1: bap_arch) -> *mut ::libc::c_char;
     pub fn bap_bitvector_to_string(arg1: bap_bitvector)
      -> *mut ::libc::c_char;
     pub fn bap_mem_to_string(arg1: bap_mem) -> *mut ::libc::c_char;
@@ -545,11 +546,13 @@ extern "C" {
      -> bap_disasm;
     pub fn bap_disasm_get_insns(d: bap_disasm) -> *mut *mut bap_disasm_insn;
     pub fn bap_insn_get_stmts(i: bap_insn) -> *mut *mut bap_stmt;
+    pub fn bap_insn_is_call(i: bap_insn) -> u8;
     pub fn bap_get_segments(buf: *mut ::libc::c_char, len: size_t)
      -> *mut *mut bap_segment;
     pub fn bap_get_symbols(buf: *mut ::libc::c_char, len: size_t)
      -> *mut *mut bap_symbol;
     pub fn bap_byteweight(arch: bap_arch, mem: bap_mem) -> *mut bap_addr;
+    pub fn bap_get_arch(buf: *mut ::libc::c_char, len: size_t) -> bap_arch;
     pub fn bap_free(arg1: *mut ::libc::c_void);
     pub fn bap_init();
     pub fn bap_thread_register() -> u8;
