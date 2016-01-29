@@ -145,8 +145,8 @@ fn extract_arch() {
   let x86_buf = include_bytes!("../test_data/elf_x86");
   let x86_64_buf = include_bytes!("../test_data/elf_x86_64");
   with_bap(|ctx| {
-    assert_eq!(Arch::from_file_contents(x86_buf, &ctx), Arch::X86);
-    assert_eq!(Arch::from_file_contents(x86_64_buf, &ctx), Arch::X86_64);
+    assert_eq!(Arch::ll_from_file_contents(x86_buf, &ctx), Arch::X86);
+    assert_eq!(Arch::ll_from_file_contents(x86_64_buf, &ctx), Arch::X86_64);
   })
 }
 
@@ -290,11 +290,14 @@ impl Arch {
       BAP_X86_64 => X86_64
     }
   }
-  pub fn from_file_contents(contents : &[u8], _ctx : &Context) -> Self {
+  pub fn ll_from_file_contents(contents : &[u8], _ctx : &Context) -> Self {
     Self::of_bap(unsafe {
       raw::bap_get_arch(contents.as_ptr() as *mut ::libc::c_char,
                         contents.len() as size_t)
     })
+  }
+  pub fn from_file_contents(contents : &[u8]) -> Self {
+    with_bap(|ctx|{Arch::ll_from_file_contents(contents, &ctx)})
   }
 }
 

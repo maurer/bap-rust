@@ -104,7 +104,7 @@ impl Segment {
 
 pub fn lift(addr : &BitVector,
             endian : Endian, arch : Arch,
-            bin : &[u8]) -> Vec<(BitVector, BitVector, Vec<Stmt>)> {
+            bin : &[u8]) -> Vec<(BitVector, BitVector, Vec<Stmt>, bool)> {
   ll::with_bap(|ctx| {
     let base  = addr.to_bap(&ctx);
     let bs    = ll::BigString::new(&ctx, bin);
@@ -115,7 +115,8 @@ pub fn lift(addr : &BitVector,
                     BitVector::of_bap(&ctx, &di.end),
                     di.insn.stmts(&ctx).iter().map(|i|{i.map_bv(&|x|{
                         BitVector::of_bap(&ctx, x)
-                    })}).collect())}).collect()
+                    })}).collect(),
+                    di.insn.is_call(&ctx))}).collect()
   })
 }
 
