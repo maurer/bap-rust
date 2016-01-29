@@ -11,7 +11,7 @@ use num::traits::ToPrimitive;
 
 use low_level as ll;
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct BitVector {
   pub val   : BigUint,
   pub width : BitSize
@@ -33,6 +33,7 @@ pub type Addr = BitVector;
 
 pub type Stmt = ll::Stmt<BitVector>;
 
+#[derive(Debug)]
 pub struct Symbol {
   pub name  : String,
   pub func  : bool,
@@ -116,4 +117,14 @@ pub fn lift(addr : &BitVector,
                         BitVector::of_bap(&ctx, x)
                     })}).collect())}).collect()
   })
+}
+
+#[test]
+fn dump_syms() {
+  let buf = include_bytes!("../test_data/elf_x86");
+  let syms = Symbol::from_file_contents(buf);
+  let main_sym = syms.iter().filter(|x| {x.name == "main"}).next().unwrap();
+  let f_sym = syms.iter().filter(|x| {x.name == "f"}).next().unwrap();
+  assert_eq!(main_sym.start.val.to_u32().unwrap(), 0x080483f5);
+  assert_eq!(f_sym.start.val.to_u32().unwrap(), 0x080483eb);
 }

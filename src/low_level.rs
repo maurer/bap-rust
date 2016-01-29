@@ -602,9 +602,12 @@ impl BitVector {
   pub fn contents(&self, ctx : &Context) -> Vec<u8> {
     unsafe {
       let ptr = raw::bap_bitvector_contents(self.raw);
-      let byte_count = (self.width(ctx) / 8) as isize;
+      let byte_count = {
+        let width = self.width(ctx);
+        (width / 8) + (if width % 8 != 0 {1} else {0})
+      } as isize;
       let mut res = Vec::new();
-      for i in 0..(byte_count - 1) {
+      for i in 0..byte_count {
         res.push(*(ptr.offset(i)) as u8);
       };
       bap_free(ptr);
