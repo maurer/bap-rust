@@ -729,6 +729,11 @@ impl Instruction {
       res
     }
   }
+  pub fn is_call(&self, _ctx : &Context) -> bool {
+    unsafe {
+      raw::bap_insn_is_call(self.raw) != 0
+    }
+  }
   pub fn stmts(&self, _ctx : &Context) -> Vec<Stmt<BitVector>> {
     unsafe {
       let narr = raw::bap_insn_get_stmts(self.raw);
@@ -821,6 +826,29 @@ fn create_and_disasm_mem() {
     let mem = MemRegion::new(&ctx, &bs, 0, shell.len(), Endian::Little, &base);
     let disas = Disasm::mem(&ctx, Vec::new(), Arch::X86, mem);
     assert_eq!(&disas.to_string(&ctx), "XOR32rr(EAX,EAX,EAX)\nPUSH32r(EAX)\nPUSHi32(0x68732f2f)\nPUSHi32(0x6e69622f)\nMOV32rr(EBX,ESP)\nPUSH32r(EAX)\nPUSH32r(EBX)\nMOV32rr(ECX,ESP)\nCDQ()\nMOV8ri(AL,0xb)\nINT(-0x80)\n")
+  })
+}
+
+#[test]
+fn call_or_not() {
+  with_bap(|ctx| {
+    let base = BitVector::create_64(&ctx, 32, 64);
+    {
+      let nocall = b"\x31\xc0\x50\x68//sh\x68/bin\x89\xe3\x50\x53\x89\xe1\x99\xb0\x0b\xcd\x80";
+      let nocall_bs = BigString::new(&ctx, nocall);
+      let nocall_mem = MemRegion::new(&ctx, &nocall_bs, 0, nocall.len(), Endian::Little, &base);
+      let nocall_disas = Disasm::mem(&ctx, Vec::new(), Arch::X86, nocall_mem);
+      let nocall_insns = nocall_disas.instructions(&ctx);
+      assert!(nocall_insns.iter().all(|d_insn| {!d_insn.insn.is_call(&ctx)}));
+    }
+    {
+      let call = b"\xff\xd0";
+      let call_bs = BigString::new(&ctx, call);
+      let call_mem = MemRegion::new(&ctx, &call_bs, 0, call.len(), Endian::Little, &base);
+      let call_disas = Disasm::mem(&ctx, Vec::new(), Arch::X86, call_mem);
+      let call_insns = call_disas.instructions(&ctx);
+      assert!(call_insns.iter().all(|d_insn| {d_insn.insn.is_call(&ctx)}));
+    }
   })
 }
 
