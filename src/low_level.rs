@@ -281,7 +281,7 @@ impl Arch {
       X86_64 => BAP_X86_64
     }
   }
-  fn of_bap(raw : raw::bap_arch) -> Self {
+  pub fn of_bap(raw : raw::bap_arch) -> Self {
     use self::Arch::*;
     use raw::Enum_bap_arch::*;
     match raw {
