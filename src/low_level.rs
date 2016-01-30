@@ -272,7 +272,7 @@ pub enum Arch {
 }
 
 impl Arch {
-  fn to_bap(&self) -> raw::bap_arch {
+  pub fn to_bap(&self) -> raw::bap_arch {
     use self::Arch::*;
     use raw::Enum_bap_arch::*;
     match *self {
