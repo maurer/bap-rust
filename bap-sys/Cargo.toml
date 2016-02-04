@@ -1,14 +1,18 @@
 [package]
 
-name = "bap"
+name = "bap-sys"
 version = "0.0.1"
 authors = [ "Matthew Maurer <maurer@matthewmaurer.org>" ]
 license = "MIT"
 description = "Rust bindings to BAP"
 repository = "https://github.com/maurer/bap-rust"
+links = "bap"
+build = "build.rs"
+
+[build-dependencies]
+pkg-config = "*"
 
 [dependencies]
-libc = "0.2"
-num = "*"
-enum_primitive = "*"
-bap-sys = {path = "./bap-sys"}
+libc = "*"
+
+[lib]

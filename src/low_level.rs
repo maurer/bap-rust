@@ -1,5 +1,5 @@
-use raw;
-use raw::size_t;
+use bap_sys;
+use libc::size_t;
 use std::sync::{Once, ONCE_INIT};
 use std::marker::PhantomData;
 use num::FromPrimitive;
@@ -11,7 +11,7 @@ pub struct Context {
 
 impl Drop for Context {
   fn drop(&mut self) {
-    unsafe {raw::bap_release()}
+    unsafe {bap_sys::bap_release()}
   }
 }
 
@@ -21,28 +21,28 @@ struct ThreadContext {
 
 impl Drop for ThreadContext {
   fn drop(&mut self) {
-    unsafe {assert!(raw::bap_thread_unregister() != 0)}
+    unsafe {assert!(bap_sys::bap_thread_unregister() != 0)}
   }
 }
 
 unsafe fn bap_free<T>(arg : *mut T) {
-  raw::bap_free(arg as *mut ::libc::c_void)
+  bap_sys::bap_free(arg as *mut ::std::os::raw::c_void)
 }
 
 impl ThreadContext {
   fn lock(&self) -> Context {
-    unsafe {raw::bap_acquire()}
+    unsafe {bap_sys::bap_acquire()}
     Context { stamp : PhantomData }
   }
   unsafe fn init() -> Self {
     let mut bap_init_ran = false;
     BAP_INIT.call_once(|| {
-      raw::bap_init();
-      raw::bap_release();
+      bap_sys::bap_init();
+      bap_sys::bap_release();
       bap_init_ran = true;
     });
     if !bap_init_ran {
-      assert!(raw::bap_thread_register() != 0);
+      assert!(bap_sys::bap_thread_register() != 0);
     }
     ThreadContext { stamp : PhantomData }
   }
@@ -62,12 +62,12 @@ pub fn with_bap<A, F>(f : F) -> A
 macro_rules! abs_type {
   ($name:ident, $c_name:ident, $c_free_name:ident, $cap_name:ident) => {
     pub struct $cap_name {
-      raw : raw::$c_name
+      bap_sys : bap_sys::$c_name
     }
     impl Drop for $cap_name {
       fn drop(&mut self) ->() {
         unsafe {
-          raw::$c_free_name(self.raw);
+          bap_sys::$c_free_name(self.bap_sys);
         }
       }
     }
@@ -106,14 +106,14 @@ pub struct Segment {
 impl Segment {
   pub fn from_file_contents(_ctx : &Context, contents : &[u8]) -> Vec<Self> {
     unsafe {
-      let raw_segs = raw::bap_get_segments(
+      let bap_sys_segs = bap_sys::bap_get_segments(
         contents.as_ptr() as *mut ::libc::c_char,
         contents.len() as size_t);
       let mut index = 0;
       let mut res = Vec::new();
-      while !(*raw_segs.offset(index)).is_null() {
+      while !(*bap_sys_segs.offset(index)).is_null() {
         {
-          let cur = &(**raw_segs.offset(index));
+          let cur = &(**bap_sys_segs.offset(index));
           res.push(Segment {
             name : (String::from_utf8_lossy(CStr::from_ptr(cur.name).to_bytes()))
                      .into_owned(),
@@ -123,10 +123,10 @@ impl Segment {
             mem  : MemRegion::of_bap(cur.mem),
           });
         }
-        bap_free(*raw_segs.offset(index));
+        bap_free(*bap_sys_segs.offset(index));
         index += 1;
       }
-      bap_free(raw_segs);
+      bap_free(bap_sys_segs);
       res
     }
   }
@@ -176,14 +176,14 @@ pub struct Symbol {
 impl Symbol {
   pub fn from_file_contents(_ctx : &Context, contents : &[u8]) -> Vec<Self> {
     unsafe {
-      let raw_syms = raw::bap_get_symbols(
+      let bap_sys_syms = bap_sys::bap_get_symbols(
         contents.as_ptr() as *mut ::libc::c_char,
         contents.len() as size_t);
       let mut index = 0;
       let mut res = Vec::new();
-      while !(*raw_syms.offset(index)).is_null() {
+      while !(*bap_sys_syms.offset(index)).is_null() {
         {
-          let cur = &(**raw_syms.offset(index));
+          let cur = &(**bap_sys_syms.offset(index));
           res.push(Symbol {
             name  : (String::from_utf8_lossy(CStr::from_ptr(cur.name).to_bytes()))
                      .into_owned(),
@@ -193,21 +193,21 @@ impl Symbol {
             end   : Some(BitVector::of_bap(cur.end)),
           });
         }
-        bap_free(*raw_syms.offset(index));
+        bap_free(*bap_sys_syms.offset(index));
         index += 1;
       }
-      bap_free(raw_syms);
+      bap_free(bap_sys_syms);
       res
     }
   }
   pub fn byteweight(ctx : &Context, arch : Arch, mem : &MemRegion) -> Vec<Self> {
     unsafe {
-      let raw_addrs = raw::bap_byteweight(arch.to_bap(), mem.raw);
+      let bap_sys_addrs = bap_sys::bap_byteweight(arch.to_bap(), mem.bap_sys);
       let mut index = 0;
       let mut res = Vec::new();
-      while !(*raw_addrs.offset(index)).is_null() {
+      while !(*bap_sys_addrs.offset(index)).is_null() {
         {
-          let cur = *raw_addrs.offset(index);
+          let cur = *bap_sys_addrs.offset(index);
           let addr = BitVector::of_bap(cur);
           let name = format!("byteweight_{}", addr.to_string(ctx));
           res.push(Symbol {
@@ -220,7 +220,7 @@ impl Symbol {
         }
         index += 1;
       }
-      bap_free(raw_addrs);
+      bap_free(bap_sys_addrs);
       res
     }
   }
@@ -272,19 +272,19 @@ pub enum Arch {
 }
 
 impl Arch {
-  pub fn to_bap(&self) -> raw::bap_arch {
+  pub fn to_bap(&self) -> bap_sys::bap_arch {
     use self::Arch::*;
-    use raw::Enum_bap_arch::*;
+    use bap_sys::Enum_bap_arch::*;
     match *self {
       ARM    => BAP_ARM,
       X86    => BAP_X86,
       X86_64 => BAP_X86_64
     }
   }
-  pub fn of_bap(raw : raw::bap_arch) -> Self {
+  pub fn of_bap(bap_sys : bap_sys::bap_arch) -> Self {
     use self::Arch::*;
-    use raw::Enum_bap_arch::*;
-    match raw {
+    use bap_sys::Enum_bap_arch::*;
+    match bap_sys {
       BAP_ARM    => ARM,
       BAP_X86    => X86,
       BAP_X86_64 => X86_64
@@ -292,7 +292,7 @@ impl Arch {
   }
   pub fn ll_from_file_contents(contents : &[u8], _ctx : &Context) -> Self {
     Self::of_bap(unsafe {
-      raw::bap_get_arch(contents.as_ptr() as *mut ::libc::c_char,
+      bap_sys::bap_get_arch(contents.as_ptr() as *mut ::libc::c_char,
                         contents.len() as size_t)
     })
   }
@@ -310,8 +310,8 @@ pub enum Type {
 }
 
 impl Type {
-  unsafe fn of_bap(typ : *mut raw::bap_type) -> Type {
-    use raw::Enum_bap_type_kind::*;
+  unsafe fn of_bap(typ : *mut bap_sys::bap_type) -> Type {
+    use bap_sys::Enum_bap_type_kind::*;
     let mut typ = *typ;
     match typ.kind {
       BAP_TYPE_IMM => Type::BitVector(*typ.imm() as BitSize),
@@ -332,7 +332,7 @@ pub struct Var {
 }
 
 impl Var {
-  unsafe fn of_bap(var : *mut raw::bap_var) -> Self {
+  unsafe fn of_bap(var : *mut bap_sys::bap_var) -> Self {
     let var = *var;
     Var {
       name    : String::from_utf8_lossy(CStr::from_ptr(var.name).to_bytes()).into_owned(),
@@ -475,8 +475,8 @@ impl <BV> Expr<BV> {
 }
 
 impl Expr<BitVector> {
-  unsafe fn of_bap(expr : *mut raw::bap_expr) -> Self {
-    use raw::Enum_bap_expr_kind::*;
+  unsafe fn of_bap(expr : *mut bap_sys::bap_expr) -> Self {
+    use bap_sys::Enum_bap_expr_kind::*;
     let mut expr = *expr;
     match expr.kind {
       BAP_EXPR_LOAD    => Expr::Load {
@@ -552,9 +552,9 @@ pub enum Stmt<BV> {
 }
 
 impl Stmt<BitVector> {
-  unsafe fn of_bap(stmt : *mut raw::bap_stmt) -> Self {
+  unsafe fn of_bap(stmt : *mut bap_sys::bap_stmt) -> Self {
     use std::ffi::CStr;
-    use raw::Enum_bap_stmt_kind::*;
+    use bap_sys::Enum_bap_stmt_kind::*;
     let mut stmt = *stmt;
     match stmt.kind {
       BAP_STMT_MOVE => Stmt::Move {
@@ -576,7 +576,7 @@ impl Stmt<BitVector> {
       BAP_STMT_CPU_EXN => Stmt::CPUException(*stmt.cpu_exn() as u64),
     }
   }
-  unsafe fn of_stmts(stmts : *mut *mut raw::bap_stmt) -> Vec<Self> {
+  unsafe fn of_stmts(stmts : *mut *mut bap_sys::bap_stmt) -> Vec<Self> {
     let mut index = 0;
     let mut res = Vec::new();
     while !(*stmts.offset(index)).is_null() {
@@ -611,25 +611,25 @@ impl <BV> Stmt<BV> {
 impl BitVector {
   pub fn create_64(_ctx : &Context, val : u64, width : BitSize) -> Self {
     unsafe {
-      BitVector {raw : raw::bap_create_bitvector64(val as i64, width as i16)}
+      BitVector {bap_sys : bap_sys::bap_create_bitvector64(val as i64, width as i16)}
     }
   }
   pub fn to_string(&self, _ctx : &Context) -> String {
     unsafe {
       use std::ffi::CStr;
-      let ptr = raw::bap_bitvector_to_string(self.raw);
+      let ptr = bap_sys::bap_bitvector_to_string(self.bap_sys);
       let res = String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes())
                 .into_owned();
       bap_free(ptr);
       res
     }
   }
-  unsafe fn of_bap(raw : raw::bap_bitvector) -> Self {
-    BitVector { raw : raw }
+  unsafe fn of_bap(bap_sys : bap_sys::bap_bitvector) -> Self {
+    BitVector { bap_sys : bap_sys }
   }
   pub fn contents(&self, ctx : &Context) -> Vec<u8> {
     unsafe {
-      let ptr = raw::bap_bitvector_contents(self.raw);
+      let ptr = bap_sys::bap_bitvector_contents(self.bap_sys);
       let byte_count = {
         let width = self.width(ctx);
         (width / 8) + (if width % 8 != 0 {1} else {0})
@@ -643,15 +643,15 @@ impl BitVector {
     }
   }
   pub fn width(&self, _ctx : &Context) -> BitSize {
-    unsafe {raw::bap_bitvector_size(self.raw) as BitSize}
+    unsafe {bap_sys::bap_bitvector_size(self.bap_sys) as BitSize}
   }
 }
 
 impl BigString {
   pub fn new(_ctx : &Context, buf : &[u8]) -> BigString {
     BigString {
-      raw : unsafe {
-        raw::bap_create_bigstring(buf.as_ptr() as *mut ::libc::c_char,
+      bap_sys : unsafe {
+        bap_sys::bap_create_bigstring(buf.as_ptr() as *mut ::libc::c_char,
                                   buf.len() as size_t)
       }
     }
@@ -659,15 +659,15 @@ impl BigString {
 }
 
 impl Endian {
-  fn to_bap(&self) -> raw::bap_endian {
-    use raw::Enum_bap_endian::*;
+  fn to_bap(&self) -> bap_sys::bap_endian {
+    use bap_sys::Enum_bap_endian::*;
     match *self {
       Endian::Little => BAP_LITTLE_ENDIAN,
       Endian::Big    => BAP_BIG_ENDIAN
     }
   }
-  fn of_bap(e : raw::bap_endian) -> Self {
-    use raw::Enum_bap_endian::*;
+  fn of_bap(e : bap_sys::bap_endian) -> Self {
+    use bap_sys::Enum_bap_endian::*;
     match e {
       BAP_LITTLE_ENDIAN => Endian::Little,
       BAP_BIG_ENDIAN => Endian::Big,
@@ -687,19 +687,19 @@ impl MemRegion {
              off : usize, len : usize,
              endian : Endian, addr : &Addr) -> Self {
     MemRegion {
-      raw : unsafe {
-        raw::bap_create_mem(off as size_t,
+      bap_sys : unsafe {
+        bap_sys::bap_create_mem(off as size_t,
                             len as size_t,
                             endian.to_bap(),
-                            addr.raw,
-                            bs.raw)
+                            addr.bap_sys,
+                            bs.bap_sys)
       }
     }
   }
   pub fn to_string(&self, _ctx : &Context) -> String {
     unsafe {
       use std::ffi::CStr;
-      let ptr = raw::bap_mem_to_string(self.raw);
+      let ptr = bap_sys::bap_mem_to_string(self.bap_sys);
       let res = String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes())
                 .into_owned();
       bap_free(ptr);
@@ -708,7 +708,7 @@ impl MemRegion {
   }
   pub fn project(&self, _ctx : &Context) -> MemLocal {
     unsafe {
-      let p = &(*raw::bap_project_mem(self.raw));
+      let p = &(*bap_sys::bap_project_mem(self.bap_sys));
       MemLocal {
         start : BitVector::of_bap(p.start),
         end   : BitVector::of_bap(p.end),
@@ -716,8 +716,8 @@ impl MemRegion {
       }
     }
   }
-  unsafe fn of_bap(raw : raw::bap_mem) -> Self {
-    MemRegion { raw : raw }
+  unsafe fn of_bap(bap_sys : bap_sys::bap_mem) -> Self {
+    MemRegion { bap_sys : bap_sys }
   }
 }
 
@@ -725,7 +725,7 @@ impl Instruction {
   pub fn to_string(&self, _ctx : &Context) -> String {
     unsafe {
       use std::ffi::CStr;
-      let ptr = raw::bap_insn_to_asm(self.raw);
+      let ptr = bap_sys::bap_insn_to_asm(self.bap_sys);
       let res = String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes())
                 .into_owned();
       bap_free(ptr);
@@ -734,17 +734,17 @@ impl Instruction {
   }
   pub fn is_call(&self, _ctx : &Context) -> bool {
     unsafe {
-      raw::bap_insn_is_call(self.raw) != 0
+      bap_sys::bap_insn_is_call(self.bap_sys) != 0
     }
   }
   pub fn stmts(&self, _ctx : &Context) -> Vec<Stmt<BitVector>> {
     unsafe {
-      let narr = raw::bap_insn_get_stmts(self.raw);
+      let narr = bap_sys::bap_insn_get_stmts(self.bap_sys);
       Stmt::of_stmts(narr)
     }
   }
-  unsafe fn of_bap(raw : raw::bap_insn) -> Self {
-    Instruction { raw : raw }
+  unsafe fn of_bap(bap_sys : bap_sys::bap_insn) -> Self {
+    Instruction { bap_sys : bap_sys }
   }
 }
 
@@ -754,27 +754,27 @@ impl Disasm {
              arch  : Arch,
              mem   : MemRegion) -> Self {
     Disasm {
-      raw : unsafe {
+      bap_sys : unsafe {
         let mut roots_backing = Vec::new();
         let roots_ptr = if roots.len() == 0 {
             ::std::ptr::null_mut()
           } else {
             for root in roots {
-              roots_backing.push(root.raw);
+              roots_backing.push(root.bap_sys);
             }
             roots_backing.push(::std::ptr::null_mut());
             roots_backing.as_mut_ptr()
           };
-        raw::bap_disasm_mem(roots_ptr,
+        bap_sys::bap_disasm_mem(roots_ptr,
                             arch.to_bap(),
-                            mem.raw)
+                            mem.bap_sys)
       }
     }
   }
   pub fn to_string(&self, _ctx : &Context) -> String {
     unsafe {
       use std::ffi::CStr;
-      let ptr = raw::bap_disasm_to_string(self.raw);
+      let ptr = bap_sys::bap_disasm_to_string(self.bap_sys);
       let res = String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes())
                 .into_owned();
       bap_free(ptr);
@@ -783,7 +783,7 @@ impl Disasm {
   }
   pub fn instructions(&self, _ctx : &Context) -> Vec<DisasmInsn> {
     unsafe {
-      let narr = raw::bap_disasm_get_insns(self.raw);
+      let narr = bap_sys::bap_disasm_get_insns(self.bap_sys);
       let mut index = 0;
       let mut res = Vec::new();
       while !(*narr.offset(index)).is_null() {
