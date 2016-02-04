@@ -1,15 +1,15 @@
-pub use low_level::Expr;
-pub use low_level::BinOp;
-pub use low_level::UnOp;
-pub use low_level::BitSize;
-pub use low_level::Endian;
-pub use low_level::Arch;
-pub use low_level::CastKind;
+pub use expert::Expr;
+pub use expert::BinOp;
+pub use expert::UnOp;
+pub use expert::BitSize;
+pub use expert::Endian;
+pub use expert::Arch;
+pub use expert::CastKind;
 
 use num::bigint::BigUint;
 use num::traits::ToPrimitive;
 
-use low_level as ll;
+use expert as ex;
 
 #[derive(Clone,Debug)]
 pub struct BitVector {
@@ -18,11 +18,11 @@ pub struct BitVector {
 }
 
 impl BitVector {
-  fn to_bap(&self, ctx : &ll::Context) -> ll::BitVector {
+  fn to_bap(&self, ctx : &ex::Context) -> ex::BitVector {
     //TODO support >64bit conversions
-    ll::BitVector::create_64(ctx, self.val.to_u64().unwrap(), self.width)
+    ex::BitVector::create_64(ctx, self.val.to_u64().unwrap(), self.width)
   }
-  fn of_bap(ctx : &ll::Context, bv : &ll::BitVector) -> Self {
+  fn of_bap(ctx : &ex::Context, bv : &ex::BitVector) -> Self {
     BitVector {
       val   : BigUint::from_bytes_le(&bv.contents(&ctx)),
       width : bv.width(&ctx)
@@ -31,7 +31,7 @@ impl BitVector {
 }
 pub type Addr = BitVector;
 
-pub type Stmt = ll::Stmt<BitVector>;
+pub type Stmt = ex::Stmt<BitVector>;
 
 #[derive(Debug)]
 pub struct Symbol {
@@ -43,7 +43,7 @@ pub struct Symbol {
 }
 
 impl Symbol {
-  pub fn of_bap(ctx : &ll::Context, sym : &ll::Symbol) -> Self {
+  pub fn of_bap(ctx : &ex::Context, sym : &ex::Symbol) -> Self {
     Symbol {
       name  : sym.name.clone(),
       func  : sym.func,
@@ -55,8 +55,8 @@ impl Symbol {
     }
   }
   pub fn from_file_contents(contents : &[u8]) -> Vec<Self> {
-    ll::with_bap(|ctx| {
-      ll::Symbol::from_file_contents(&ctx, contents).iter().map(|sym|{Symbol::of_bap(&ctx, sym)}).collect()
+    ex::with_bap(|ctx| {
+      ex::Symbol::from_file_contents(&ctx, contents).iter().map(|sym|{Symbol::of_bap(&ctx, sym)}).collect()
     })
   }
 }
@@ -74,15 +74,15 @@ pub struct Segment {
 
 impl Segment {
   pub fn from_file_contents(contents : &[u8]) -> Vec<Self> {
-    ll::with_bap(|ctx| {
-      let ll_segs = ll::Segment::from_file_contents(&ctx, contents);
-      ll_segs.iter().map(|ll_seg| {
-        let mem_local = ll_seg.mem.project(&ctx);
+    ex::with_bap(|ctx| {
+      let ex_segs = ex::Segment::from_file_contents(&ctx, contents);
+      ex_segs.iter().map(|ex_seg| {
+        let mem_local = ex_seg.mem.project(&ctx);
         Segment {
-          name  : ll_seg.name.clone(),
-          r     : ll_seg.r,
-          w     : ll_seg.w,
-          x     : ll_seg.x,
+          name  : ex_seg.name.clone(),
+          r     : ex_seg.r,
+          w     : ex_seg.w,
+          x     : ex_seg.x,
           start : BitVector::of_bap(&ctx, &mem_local.start),
           end   : BitVector::of_bap(&ctx, &mem_local.end),
           data  : mem_local.data
@@ -91,13 +91,13 @@ impl Segment {
     })
   }
   pub fn byteweight(&self, arch : Arch) -> Vec<Symbol> {
-    ll::with_bap(|ctx| {
+    ex::with_bap(|ctx| {
       let base  = self.start.to_bap(&ctx);
-      let bs    = ll::BigString::new(&ctx, &self.data);
+      let bs    = ex::BigString::new(&ctx, &self.data);
       //TODO track endianness in segments
-      let mem   = ll::MemRegion::new(&ctx, &bs, 0, self.data.len(), Endian::Little, &base);
-      let ll_syms = ll::Symbol::byteweight(&ctx, arch, &mem);
-      ll_syms.iter().map(|sym|{Symbol::of_bap(&ctx, &sym)}).collect()
+      let mem   = ex::MemRegion::new(&ctx, &bs, 0, self.data.len(), Endian::Little, &base);
+      let ex_syms = ex::Symbol::byteweight(&ctx, arch, &mem);
+      ex_syms.iter().map(|sym|{Symbol::of_bap(&ctx, &sym)}).collect()
     })
   }
 }
@@ -105,11 +105,11 @@ impl Segment {
 pub fn lift(addr : &BitVector,
             endian : Endian, arch : Arch,
             bin : &[u8]) -> Vec<(BitVector, BitVector, Vec<Stmt>, bool)> {
-  ll::with_bap(|ctx| {
+  ex::with_bap(|ctx| {
     let base  = addr.to_bap(&ctx);
-    let bs    = ll::BigString::new(&ctx, bin);
-    let mem   = ll::MemRegion::new(&ctx, &bs, 0, bin.len(), endian, &base);
-    let disas = ll::Disasm::mem(&ctx, Vec::new(), arch, mem);
+    let bs    = ex::BigString::new(&ctx, bin);
+    let mem   = ex::MemRegion::new(&ctx, &bs, 0, bin.len(), endian, &base);
+    let disas = ex::Disasm::mem(&ctx, Vec::new(), arch, mem);
     let insns = disas.instructions(&ctx).into_iter();
     insns.map(|di|{(BitVector::of_bap(&ctx, &di.start),
                     BitVector::of_bap(&ctx, &di.end),
