@@ -62,6 +62,9 @@ impl BitVector {
   pub fn to_bitvec(&self) -> BitVec {
     self.inner.clone()
   }
+  pub fn from_bitvec(bv : &BitVec) -> Self {
+    BitVector { inner : bv.clone() }
+  }
 }
 pub type Addr = BitVector;
 
