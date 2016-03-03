@@ -2,8 +2,8 @@ use bap_sys;
 use libc::size_t;
 use std::sync::{Once, ONCE_INIT};
 use std::marker::PhantomData;
-use num::FromPrimitive;
 use std::ffi::CStr;
+use num::traits::FromPrimitive;
 
 pub struct Context {
   stamp: PhantomData<*const Context>

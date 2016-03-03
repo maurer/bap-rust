@@ -1,6 +1,8 @@
 extern crate bap_sys;
 extern crate libc;
 #[macro_use] extern crate enum_primitive;
+extern crate bit_vec;
+extern crate byteorder;
 extern crate num;
 
 pub mod expert;
@@ -13,27 +15,52 @@ pub use expert::Endian;
 pub use expert::Arch;
 pub use expert::CastKind;
 
-use num::bigint::BigUint;
-use num::traits::ToPrimitive;
+use bit_vec::BitVec;
 
 use expert as ex;
 
+use byteorder::{LittleEndian, ReadBytesExt};
+use std::io::Cursor;
+
 #[derive(Clone,Debug)]
 pub struct BitVector {
-  pub val   : BigUint,
-  pub width : BitSize
+  inner : BitVec
 }
 
 impl BitVector {
   fn to_bap(&self, ctx : &ex::Context) -> ex::BitVector {
     //TODO support >64bit conversions
-    ex::BitVector::create_64(ctx, self.val.to_u64().unwrap(), self.width)
+    ex::BitVector::create_64(ctx, self.to_u64().unwrap(),
+                                  self.inner.len() as u16)
   }
   fn of_bap(ctx : &ex::Context, bv : &ex::BitVector) -> Self {
+    let mut bvn = BitVec::from_bytes(&bv.contents(&ctx));
+    bvn.truncate(bv.width(&ctx) as usize);
     BitVector {
-      val   : BigUint::from_bytes_le(&bv.contents(&ctx)),
-      width : bv.width(&ctx)
+      inner : bvn
     }
+  }
+  pub fn to_u32(&self) -> Option<u32> {
+    if self.inner.len() <= 32 {
+      let mut rdr = Cursor::new(self.inner.to_bytes());
+      rdr.read_u32::<LittleEndian>().ok()
+    } else {
+      None
+    }
+  }
+  pub fn to_u64(&self) -> Option<u64> {
+    if self.inner.len() <= 64 {
+      let mut rdr = Cursor::new(self.inner.to_bytes());
+      rdr.read_u64::<LittleEndian>().ok()
+    } else {
+      None
+    }
+  }
+  pub fn into_bitvec(self) -> BitVec {
+    self.inner
+  }
+  pub fn to_bitvec(&self) -> BitVec {
+    self.inner.clone()
   }
 }
 pub type Addr = BitVector;
@@ -133,6 +160,6 @@ fn dump_syms() {
   let syms = Symbol::from_file_contents(buf);
   let main_sym = syms.iter().filter(|x| {x.name == "main"}).next().unwrap();
   let f_sym = syms.iter().filter(|x| {x.name == "f"}).next().unwrap();
-  assert_eq!(main_sym.start.val.to_u32().unwrap(), 0x080483f5);
-  assert_eq!(f_sym.start.val.to_u32().unwrap(), 0x080483eb);
+  assert_eq!(main_sym.start.to_u32().unwrap(), 0x080483f5);
+  assert_eq!(f_sym.start.to_u32().unwrap(), 0x080483eb);
 }

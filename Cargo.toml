@@ -12,3 +12,5 @@ libc = "0.2"
 num = "*"
 enum_primitive = "*"
 bap-sys = {path = "./bap-sys"}
+bit-vec = "*"
+byteorder = "*"
