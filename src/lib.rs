@@ -72,6 +72,9 @@ impl BitVector {
       bv
     }}
   }
+  pub fn len(&self) -> usize {
+    self.inner.len()
+  }
 }
 
 impl ::std::ops::Add for BitVector {
