@@ -65,7 +65,36 @@ impl BitVector {
   pub fn from_bitvec(bv : &BitVec) -> Self {
     BitVector { inner : bv.clone() }
   }
+  pub fn one(len : usize) -> Self {
+    BitVector { inner : {
+      let mut bv = BitVec::from_elem(len, false);
+      bv.set(0, true);
+      bv
+    }}
+  }
 }
+
+impl ::std::ops::Add for BitVector {
+  type Output = Self;
+  fn add(self, rhs : BitVector) -> Self {
+    //TODO accelerate by keeping a bignum repr too
+    assert_eq!(self.inner.len(), rhs.inner.len());
+    let mut bv = self.inner;
+    for i in 0..rhs.inner.len() {
+      let mut flip = i;
+      while (bv[flip] == true) && flip < bv.len() {
+        bv.set(flip, false);
+        flip += 1;
+      }
+
+      if flip < bv.len() {
+        bv.set(flip, true);
+      }
+    }
+    BitVector { inner : bv }
+  }
+}
+
 pub type Addr = BitVector;
 
 pub type Stmt = ex::Stmt<BitVector>;
