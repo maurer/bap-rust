@@ -6,6 +6,7 @@ extern crate byteorder;
 extern crate num;
 
 pub mod expert;
+pub mod bitvector;
 
 pub use expert::Expr;
 pub use expert::BinOp;
@@ -15,90 +16,9 @@ pub use expert::Endian;
 pub use expert::Arch;
 pub use expert::CastKind;
 
-use bit_vec::BitVec;
+pub use bitvector::{BitVector, Addr};
 
 use expert as ex;
-
-use byteorder::{LittleEndian, ReadBytesExt};
-use std::io::Cursor;
-
-#[derive(Clone,Debug)]
-pub struct BitVector {
-  inner : BitVec
-}
-
-impl BitVector {
-  fn to_bap(&self, ctx : &ex::Context) -> ex::BitVector {
-    //TODO support >64bit conversions
-    ex::BitVector::create_64(ctx, self.to_u64().unwrap(),
-                                  self.inner.len() as u16)
-  }
-  fn of_bap(ctx : &ex::Context, bv : &ex::BitVector) -> Self {
-    let mut bvn = BitVec::from_bytes(&bv.contents(&ctx));
-    bvn.truncate(bv.width(&ctx) as usize);
-    BitVector {
-      inner : bvn
-    }
-  }
-  pub fn to_u32(&self) -> Option<u32> {
-    if self.inner.len() <= 32 {
-      let mut rdr = Cursor::new(self.inner.to_bytes());
-      rdr.read_u32::<LittleEndian>().ok()
-    } else {
-      None
-    }
-  }
-  pub fn to_u64(&self) -> Option<u64> {
-    if self.inner.len() <= 64 {
-      let mut rdr = Cursor::new(self.inner.to_bytes());
-      rdr.read_u64::<LittleEndian>().ok()
-    } else {
-      None
-    }
-  }
-  pub fn into_bitvec(self) -> BitVec {
-    self.inner
-  }
-  pub fn to_bitvec(&self) -> BitVec {
-    self.inner.clone()
-  }
-  pub fn from_bitvec(bv : &BitVec) -> Self {
-    BitVector { inner : bv.clone() }
-  }
-  pub fn one(len : usize) -> Self {
-    BitVector { inner : {
-      let mut bv = BitVec::from_elem(len, false);
-      bv.set(0, true);
-      bv
-    }}
-  }
-  pub fn len(&self) -> usize {
-    self.inner.len()
-  }
-}
-
-impl ::std::ops::Add for BitVector {
-  type Output = Self;
-  fn add(self, rhs : BitVector) -> Self {
-    //TODO accelerate by keeping a bignum repr too
-    assert_eq!(self.inner.len(), rhs.inner.len());
-    let mut bv = self.inner;
-    for i in 0..rhs.inner.len() {
-      let mut flip = i;
-      while (bv[flip] == true) && flip < bv.len() {
-        bv.set(flip, false);
-        flip += 1;
-      }
-
-      if flip < bv.len() {
-        bv.set(flip, true);
-      }
-    }
-    BitVector { inner : bv }
-  }
-}
-
-pub type Addr = BitVector;
 
 pub type Stmt = ex::Stmt<BitVector>;
 
@@ -161,7 +81,7 @@ impl Segment {
   }
   pub fn byteweight(&self, arch : Arch) -> Vec<Symbol> {
     ex::with_bap(|ctx| {
-      let base  = self.start.to_bap(&ctx);
+      let base  = self.start.to_bap();
       let bs    = ex::BigString::new(&ctx, &self.data);
       //TODO track endianness in segments
       let mem   = ex::MemRegion::new(&ctx, &bs, 0, self.data.len(), Endian::Little, &base);
@@ -175,7 +95,7 @@ pub fn lift(addr : &BitVector,
             endian : Endian, arch : Arch,
             bin : &[u8]) -> Vec<(BitVector, BitVector, Vec<Stmt>, bool)> {
   ex::with_bap(|ctx| {
-    let base  = addr.to_bap(&ctx);
+    let base  = addr.to_bap();
     let bs    = ex::BigString::new(&ctx, bin);
     let mem   = ex::MemRegion::new(&ctx, &bs, 0, bin.len(), endian, &base);
     let disas = ex::Disasm::mem(&ctx, Vec::new(), arch, mem);
@@ -191,6 +111,7 @@ pub fn lift(addr : &BitVector,
 
 #[test]
 fn dump_syms() {
+  use num::traits::ToPrimitive;
   let buf = include_bytes!("../test_data/elf_x86");
   let syms = Symbol::from_file_contents(buf);
   let main_sym = syms.iter().filter(|x| {x.name == "main"}).next().unwrap();
