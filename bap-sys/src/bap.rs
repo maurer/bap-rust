@@ -9,7 +9,7 @@ pub type bap_addr = bap_bitvector;
 #[derive(Clone, Copy)]
 #[repr(u64)]
 pub enum Enum_bap_arch {
-    BAP_ARM = 9698489,
+    BAP_ARM = 0x4b1768bb,
     BAP_X86 = 11960045,
     BAP_X86_64 = 18446744072543217487,
 }

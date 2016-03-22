@@ -9,7 +9,6 @@ before_script:
   # Install libbap
   - opam init -y
   - eval `opam config env`
-  - opam pin add core_kernel 112.17.00 -y
   - opam pin add bap --dev-repo -y
   - opam install -y oasis
   - cd libbap

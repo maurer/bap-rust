@@ -71,6 +71,9 @@ macro_rules! abs_type {
         }
       }
     }
+    // Use of this pointer is guarded by a threadlock
+    unsafe impl Sync for $cap_name {}
+    unsafe impl Send for $cap_name {}
   };
 }
 
@@ -865,5 +868,18 @@ fn iter_insns() {
     let disas = Disasm::mem(&ctx, Vec::new(), Arch::X86, mem);
     let insns = disas.instructions(&ctx);
     assert_eq!(insns[2].to_string(&ctx), "0x23:64 -> 0x27:64: pushl $0x68732f2f")
+  })
+}
+
+#[test]
+fn arm_insns() {
+  with_bap(|ctx| {
+    let base = BitVector::create_64(&ctx, 32, 64);
+    let shell = b"\xf8\x43\x2d\xe9\x4c\x60";
+    let bs = BigString::new(&ctx, shell);
+    let mem = MemRegion::new(&ctx, &bs, 0, shell.len(), Endian::Little, &base);
+    let disas = Disasm::mem(&ctx, Vec::new(), Arch::ARM, mem);
+    let insns = disas.instructions(&ctx);
+    assert_eq!(insns[0].to_string(&ctx), "0x20:64 -> 0x23:64: push {r3, r4, r5, r6, r7, r8, r9, lr}")
   })
 }

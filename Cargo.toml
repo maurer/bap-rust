@@ -7,6 +7,10 @@ license = "MIT"
 description = "Rust bindings to BAP"
 repository = "https://github.com/maurer/bap-rust"
 
+[features]
+default = []
+holmes_support = ["holmes", "postgres"]
+
 [dependencies]
 libc = "0.2"
 num = "*"
@@ -14,3 +18,6 @@ enum_primitive = "*"
 bap-sys = {path = "./bap-sys"}
 bit-vec = "*"
 byteorder = "*"
+
+postgres = {version = "*", optional = true, features = ["bit-vec"]}
+holmes = {path = "./holmes", optional = true}

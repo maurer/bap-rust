@@ -4,9 +4,16 @@ extern crate libc;
 extern crate bit_vec;
 extern crate byteorder;
 extern crate num;
+#[cfg(feature = "holmes_support")]
+extern crate holmes;
+#[cfg(feature = "holmes_support")]
+extern crate postgres;
 
 pub mod expert;
 pub mod bitvector;
+
+#[cfg(feature = "holmes_support")]
+pub mod holmes_support;
 
 pub use expert::Expr;
 pub use expert::BinOp;

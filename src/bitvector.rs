@@ -2,6 +2,7 @@ use bit_vec::BitVec;
 use num::bigint::BigUint;
 use num::traits::FromPrimitive;
 use num::pow;
+use std::hash::{Hash, Hasher};
 
 use expert as ex;
 
@@ -18,6 +19,30 @@ impl ::std::fmt::Debug for BitVector {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "BitVector {{ native: {:?}, bap: ?, unum: {:?} }}",
                self.native, self.unum)
+    }
+}
+
+impl Clone for BitVector {
+    fn clone(&self) -> Self {
+        BitVector::new(&self.native)
+    }
+}
+
+impl Hash for BitVector {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.native.hash(state)
+    }
+}
+
+impl PartialEq for BitVector {
+    fn eq(&self, other: &Self) -> bool {
+        self.native == other.native
+    }
+}
+
+impl PartialOrd for BitVector {
+    fn partial_cmp(&self, other: &Self) -> Option<::std::cmp::Ordering> {
+        self.native.partial_cmp(&other.native)
     }
 }
 
@@ -62,14 +87,16 @@ impl BitVector {
   pub fn new_unsigned(num: BigUint, len: usize) -> Self {
       assert!(num.bits() <= len);
       let mut bv = BitVec::from_bytes(&num.to_bytes_le());
+      let bvlen = bv.len();
+      bv.grow(len - bvlen, false);
       bv.truncate(len);
       BitVector::new(&bv)
   }
   pub fn into_bitvec(self) -> BitVec {
     self.native
   }
-  pub fn to_bitvec(&self) -> BitVec {
-    self.native.clone()
+  pub fn to_bitvec(&self) -> &BitVec {
+    &self.native
   }
   pub fn one(len : usize) -> Self {
       let mut bv = BitVec::from_elem(len, false);
@@ -90,14 +117,32 @@ fn overflow(unum: BigUint, len: usize) -> BigUint {
     }
 }
 
-impl ::std::ops::Add for BitVector {
-  type Output = Self;
-  fn add(self, rhs : BitVector) -> Self {
+impl<'a> ::std::ops::Add for &'a BitVector {
+  type Output = BitVector;
+  fn add(self, rhs: &'a BitVector) -> BitVector {
     assert_eq!(self.native.len(), rhs.native.len());
     BitVector::new_unsigned(
-        overflow(self.unum + rhs.unum, self.native.len()),
+        overflow(&self.unum + &rhs.unum,
+                 self.native.len()),
         self.native.len())
   }
+}
+
+impl<'a> ::std::ops::Add<usize> for &'a BitVector {
+  type Output = BitVector;
+  fn add(self, rhs: usize) -> BitVector {
+    BitVector::new_unsigned(
+        overflow(&self.unum + BigUint::from_usize(rhs).unwrap(),
+                 self.native.len()),
+        self.native.len())
+  }
+}
+
+impl ::std::ops::Add<usize> for BitVector {
+    type Output = BitVector;
+    fn add(self, rhs: usize) -> BitVector {
+        &self + rhs
+    }
 }
 
 pub type Addr = BitVector;

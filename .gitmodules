@@ -1,3 +1,6 @@
 [submodule "libbap"]
 	path = libbap
 	url = https://github.com/maurer/libbap
+[submodule "holmes"]
+	path = holmes
+	url = https://github.com/maurer/holmes
