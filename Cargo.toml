@@ -13,11 +13,15 @@ holmes_support = ["holmes", "postgres"]
 
 [dependencies]
 libc = "0.2"
-num = "*"
-enum_primitive = "*"
+num = "0.1"
+enum_primitive = "0.1"
 bap-sys = {path = "./bap-sys"}
-bit-vec = "*"
-byteorder = "*"
+bit-vec = "0.4"
+byteorder = "0.4"
 
 postgres = {version = "*", optional = true, features = ["bit-vec"]}
-holmes = {path = "./holmes", optional = true}
+
+[dependencies.holmes]
+git = "https://github.com/maurer/holmes"
+rev = "4c80b375c906472d3867fdb54ebb0f29be339a30"
+optional = true
