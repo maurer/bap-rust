@@ -23,5 +23,5 @@ postgres = {version = "*", optional = true, features = ["bit-vec"]}
 
 [dependencies.holmes]
 git = "https://github.com/maurer/holmes"
-rev = "4c80b375c906472d3867fdb54ebb0f29be339a30"
+rev = "1467cb49d950c459f2e9553762835b7fd273d2f5"
 optional = true

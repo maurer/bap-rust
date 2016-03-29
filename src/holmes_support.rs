@@ -10,7 +10,7 @@ use holmes::pg::dyn::{Type, Value};
 use holmes::pg::dyn::values::ToValue;
 use num::traits::FromPrimitive;
 
-#[derive(Debug,Clone,Hash)]
+#[derive(Debug,Clone,Hash,PartialEq)]
 pub struct BitVectorType;
 impl TypeT for BitVectorType {
   fn name(&self) -> Option<&'static str> {
@@ -22,12 +22,7 @@ impl TypeT for BitVectorType {
   fn repr(&self) -> Vec<String> {
     vec!["bit varying".to_string()]
   }
-  fn inner(&self) -> &Any {
-    self as &Any
-  }
-  fn inner_eq(&self, other : &TypeT) -> bool {
-    other.inner().downcast_ref::<Self>().is_some()
-  }
+  typet_boiler!();
 }
 
 impl ValueT for BitVector {
@@ -40,18 +35,7 @@ impl ValueT for BitVector {
   fn to_sql(&self) -> Vec<&ToSql> {
     vec![self.to_bitvec()]
   }
-  fn inner(&self) -> &Any {
-    self as &Any
-  }
-  fn inner_eq(&self, other : &ValueT) -> bool {
-    match other.inner().downcast_ref::<Self>() {
-      Some(x) => self == x,
-      _ => false
-    }
-  }
-  fn inner_ord(&self, other : &ValueT) -> Option<::std::cmp::Ordering> {
-    other.inner().downcast_ref::<Self>().and_then(|x|self.partial_cmp(x))
-  }
+  valuet_boiler!();
 }
 
 impl ToValue for BitVector {
@@ -60,7 +44,7 @@ impl ToValue for BitVector {
   }
 }
 
-#[derive(Debug,Clone,Hash)]
+#[derive(Debug,Clone,Hash,PartialEq)]
 pub struct ArchType;
 impl TypeT for ArchType {
   fn name(&self) -> Option<&'static str> {
@@ -72,12 +56,7 @@ impl TypeT for ArchType {
   fn repr(&self) -> Vec<String> {
     vec!["SMALLINT".to_string()]
   }
-  fn inner(&self) -> &Any {
-    self as &Any
-  }
-  fn inner_eq(&self, other : &TypeT) -> bool {
-    other.inner().downcast_ref::<Self>().is_some()
-  }
+  typet_boiler!();
 }
 
 impl ValueT for Arch {
@@ -90,18 +69,7 @@ impl ValueT for Arch {
   fn to_sql(&self) -> Vec<&ToSql> {
     vec![self.i16_ref()]
   }
-  fn inner(&self) -> &Any {
-    self as &Any
-  }
-  fn inner_eq(&self, other : &ValueT) -> bool {
-    match other.inner().downcast_ref::<Self>() {
-      Some(x) => self == x,
-      _ => false
-    }
-  }
-  fn inner_ord(&self, other : &ValueT) -> Option<::std::cmp::Ordering> {
-    other.inner().downcast_ref::<Self>().and_then(|x|self.partial_cmp(x))
-  }
+  valuet_boiler!();
 }
 
 impl ToValue for Arch {

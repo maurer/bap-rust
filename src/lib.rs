@@ -5,7 +5,7 @@ extern crate bit_vec;
 extern crate byteorder;
 extern crate num;
 #[cfg(feature = "holmes_support")]
-extern crate holmes;
+#[macro_use] extern crate holmes;
 #[cfg(feature = "holmes_support")]
 extern crate postgres;
 
