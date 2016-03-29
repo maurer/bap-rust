@@ -266,15 +266,25 @@ pub enum Endian {
   Big
 }
 
+enum_from_primitive! {
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Hash,
+         PartialOrd)]
+#[repr(i16)]
 pub enum Arch {
   ARM,
   X86,
   X86_64
 }
+}
+
 
 impl Arch {
+  #[cfg(feature = "holmes_support")]
+  pub fn i16_ref(&self) -> &i16 {
+    unsafe {::std::mem::transmute(self)}
+  }
+
   pub fn to_bap(&self) -> bap_sys::bap_arch {
     use self::Arch::*;
     use bap_sys::Enum_bap_arch::*;

@@ -1,12 +1,14 @@
 use holmes::pg::dyn::values::ValueT;
 use holmes::pg::dyn::types::TypeT;
 use bitvector::BitVector;
+use expert::Arch;
 use std::any::Any;
 use std::sync::Arc;
 use postgres::types::ToSql;
 use holmes::pg::RowIter;
 use holmes::pg::dyn::{Type, Value};
 use holmes::pg::dyn::values::ToValue;
+use num::traits::FromPrimitive;
 
 #[derive(Debug,Clone,Hash)]
 pub struct BitVectorType;
@@ -53,6 +55,56 @@ impl ValueT for BitVector {
 }
 
 impl ToValue for BitVector {
+  fn to_value(self) -> Value {
+    Arc::new(self)
+  }
+}
+
+#[derive(Debug,Clone,Hash)]
+pub struct ArchType;
+impl TypeT for ArchType {
+  fn name(&self) -> Option<&'static str> {
+    Some("arch")
+  }
+  fn extract(&self, rows : &mut RowIter) -> Value {
+    Arc::new(Arch::from_i16(rows.next().unwrap()).unwrap())
+  }
+  fn repr(&self) -> Vec<String> {
+    vec!["SMALLINT".to_string()]
+  }
+  fn inner(&self) -> &Any {
+    self as &Any
+  }
+  fn inner_eq(&self, other : &TypeT) -> bool {
+    other.inner().downcast_ref::<Self>().is_some()
+  }
+}
+
+impl ValueT for Arch {
+  fn type_(&self) -> Type {
+    Arc::new(ArchType)
+  }
+  fn get(&self) -> &Any {
+    self as &Any
+  }
+  fn to_sql(&self) -> Vec<&ToSql> {
+    vec![self.i16_ref()]
+  }
+  fn inner(&self) -> &Any {
+    self as &Any
+  }
+  fn inner_eq(&self, other : &ValueT) -> bool {
+    match other.inner().downcast_ref::<Self>() {
+      Some(x) => self == x,
+      _ => false
+    }
+  }
+  fn inner_ord(&self, other : &ValueT) -> Option<::std::cmp::Ordering> {
+    other.inner().downcast_ref::<Self>().and_then(|x|self.partial_cmp(x))
+  }
+}
+
+impl ToValue for Arch {
   fn to_value(self) -> Value {
     Arc::new(self)
   }
