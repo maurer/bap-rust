@@ -15,6 +15,25 @@ pub struct BitVector {
     unum   : BigUint,
 }
 
+#[cfg(feature = "json")]
+use rustc_serialize::{Encoder,Decoder,Encodable,Decodable};
+#[cfg(feature = "json")]
+impl Encodable for BitVector {
+    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
+        try!(self.unum.encode(s));
+        self.native.len().encode(s)
+    }
+}
+
+#[cfg(feature = "json")]
+impl Decodable for BitVector {
+    fn decode<D: Decoder>(d: &mut D) -> Result<Self, D::Error> {
+        let unum : BigUint = try!(BigUint::decode(d));
+        let len : usize = try!(usize::decode(d));
+        Ok(BitVector::new_unsigned(unum, len))
+    }
+}
+
 impl ::std::fmt::Debug for BitVector {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "BitVector {{ native: {:?}, bap: ?, unum: {:?} }}",

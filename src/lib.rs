@@ -8,6 +8,8 @@ extern crate num;
 #[macro_use] extern crate holmes;
 #[cfg(feature = "holmes_support")]
 extern crate postgres;
+#[cfg(feature = "json")]
+extern crate rustc_serialize;
 
 pub mod expert;
 pub mod bitvector;
