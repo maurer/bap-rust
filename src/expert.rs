@@ -261,6 +261,7 @@ fn run_byteweight() {
 }
 
 #[derive(Copy, Clone)]
+#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub enum Endian {
   Little,
   Big
@@ -317,6 +318,7 @@ impl Arch {
 pub type BitSize = u16;
 
 #[derive(Copy, Clone)]
+#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub enum Type {
   BitVector(BitSize),
   Memory{addr_size : BitSize, cell_size : BitSize}
@@ -337,6 +339,7 @@ impl Type {
 }
 
 #[derive(Clone)]
+#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub struct Var {
   pub name    : String,
   pub typ     : Type,
@@ -356,8 +359,9 @@ impl Var {
   }
 }
 
-enum_from_primitive! {
 #[derive(Copy, Clone)]
+#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
+#[repr(u32)]
 pub enum BinOp {
   Plus,
   Minus,
@@ -379,26 +383,44 @@ pub enum BinOp {
   SignedLessThan,
   SignedLessThanEqual
 }
+
+impl BinOp {
+    fn from_u32(i: u32) -> Self {
+        unsafe { ::std::mem::transmute(i) }
+    }
 }
 
-enum_from_primitive! {
+
 #[derive(Copy, Clone)]
+#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
+#[repr(u32)]
 pub enum UnOp {
   ArithmeticNegation,
   BinaryNegation
 }
+impl UnOp {
+    fn from_u32(i: u32) -> Self {
+        unsafe { ::std::mem::transmute(i) }
+    }
 }
 
-enum_from_primitive! {
+
 #[derive(Copy, Clone)]
+#[cfg_attr(feature="json", derive(RustcEncodable,RustcDecodable))]
+#[repr(u32)]
 pub enum CastKind {
   Unsigned,
   Signed,
   HighBits,
   LowBits
 }
+impl CastKind {
+    fn from_u32(i: u32) -> Self {
+        unsafe { ::std::mem::transmute(i) }
+    }
 }
 
+#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub enum Expr {
   Var(Var),
   BitVector(bitvector::BitVector),
@@ -453,18 +475,18 @@ impl Expr {
         size   : (*expr.store()).size as BitSize
       },
       BAP_EXPR_BINOP   => Expr::BinOp {
-        op  : BinOp::from_u32((*expr.binop()).op as u32).unwrap(),
+        op  : BinOp::from_u32((*expr.binop()).op as u32),
         lhs : Box::new(Expr::of_bap((*expr.binop()).lhs, ctx)),
         rhs : Box::new(Expr::of_bap((*expr.binop()).rhs, ctx))
       },
       BAP_EXPR_UNOP    => Expr::UnOp {
-        op  : UnOp::from_u32((*expr.unop()).op as u32).unwrap(),
+        op  : UnOp::from_u32((*expr.unop()).op as u32),
         arg : Box::new(Expr::of_bap((*expr.unop()).arg, ctx))
       },
       BAP_EXPR_VAR     => Expr::Var(Var::of_bap(*expr.var())),
       BAP_EXPR_IMM     => Expr::BitVector(bitvector::BitVector::of_bap(ctx, &BitVector::of_bap(*expr.imm()))),
       BAP_EXPR_CAST    => Expr::Cast {
-        kind  : CastKind::from_u32((*expr.cast())._type as u32).unwrap(),
+        kind  : CastKind::from_u32((*expr.cast())._type as u32),
         width : (*expr.cast()).width as BitSize,
         val   : Box::new(Expr::of_bap((*expr.cast()).val, ctx))
       },
