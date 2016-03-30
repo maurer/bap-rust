@@ -4,6 +4,7 @@ use std::sync::{Once, ONCE_INIT};
 use std::marker::PhantomData;
 use std::ffi::CStr;
 use num::traits::FromPrimitive;
+use bitvector;
 
 pub struct Context {
   stamp: PhantomData<*const Context>
@@ -47,7 +48,6 @@ impl ThreadContext {
     ThreadContext { stamp : PhantomData }
   }
 }
-
 
 thread_local!(static BAP_CTX : ThreadContext = unsafe {ThreadContext::init()});
 static BAP_INIT : Once = ONCE_INIT;
@@ -399,132 +399,79 @@ pub enum CastKind {
 }
 }
 
-pub enum Expr<BV> {
+pub enum Expr {
   Var(Var),
-  BitVector(BV),
-  Load       {memory       : Box<Expr<BV>>,
-              index        : Box<Expr<BV>>,
+  BitVector(bitvector::BitVector),
+  Load       {memory       : Box<Expr>,
+              index        : Box<Expr>,
               endian       : Endian,
               size         : BitSize},
-  Store      {memory       : Box<Expr<BV>>,
-              index        : Box<Expr<BV>>,
-              value        : Box<Expr<BV>>,
+  Store      {memory       : Box<Expr>,
+              index        : Box<Expr>,
+              value        : Box<Expr>,
               endian       : Endian,
               size         : BitSize},
   BinOp      {op           : BinOp,
-              lhs          : Box<Expr<BV>>,
-              rhs          : Box<Expr<BV>>},
+              lhs          : Box<Expr>,
+              rhs          : Box<Expr>},
   UnOp       {op           : UnOp,
-              arg          : Box<Expr<BV>>},
+              arg          : Box<Expr>},
   Cast       {kind         : CastKind,
               width        : BitSize,
-              val          : Box<Expr<BV>>},
+              val          : Box<Expr>},
   Let        {bound_var    : Var,
-              bound_expr   : Box<Expr<BV>>,
-              body_expr    : Box<Expr<BV>>},
+              bound_expr   : Box<Expr>,
+              body_expr    : Box<Expr>},
   Unknown    {description  : String,
               typ          : Type},
-  IfThenElse {cond         : Box<Expr<BV>>,
-              true_branch  : Box<Expr<BV>>,
-              false_branch : Box<Expr<BV>>},
+  IfThenElse {cond         : Box<Expr>,
+              true_branch  : Box<Expr>,
+              false_branch : Box<Expr>},
   Extract    {low_bit      : BitSize,
               high_bit     : BitSize,
-              arg          : Box<Expr<BV>>},
-  Concat     {low          : Box<Expr<BV>>,
-              high         : Box<Expr<BV>>}
+              arg          : Box<Expr>},
+  Concat     {low          : Box<Expr>,
+              high         : Box<Expr>}
 }
 
-impl <BV> Expr<BV> {
-  pub fn map_bv<BV2, F>(&self, f : &F) -> Expr<BV2>
-    where F : Fn(&BV) -> BV2 {
-    match *self {
-      Expr::BitVector(ref bv) => Expr::BitVector(f(bv)),
-      Expr::Load       {ref memory, ref index, endian, size}
-        => Expr::Load {memory : Box::new(memory.map_bv(f)),
-                       index  : Box::new(index.map_bv(f)),
-                       endian : endian,
-                       size   : size},
-      Expr::Store      {ref memory, ref index, ref value, endian, size}
-        => Expr::Store {memory : Box::new(memory.map_bv(f)),
-                        index  : Box::new(index.map_bv(f)),
-                        value  : Box::new(value.map_bv(f)),
-                        endian : endian,
-                        size   : size},
-      Expr::BinOp      {op, ref lhs, ref rhs}
-        => Expr::BinOp {op  : op,
-                        lhs : Box::new(lhs.map_bv(f)),
-                        rhs : Box::new(rhs.map_bv(f))},
-      Expr::UnOp       {op, ref arg}
-        => Expr::UnOp  {op  : op,
-                        arg : Box::new(arg.map_bv(f))},
-      Expr::Cast       {kind, width, ref val}
-        => Expr::Cast  {kind  : kind,
-                        width : width,
-                        val   : Box::new(val.map_bv(f))},
-      Expr::Let        {ref bound_var, ref bound_expr, ref body_expr}
-        => Expr::Let   {bound_var  : bound_var.clone(),
-                        bound_expr : Box::new(bound_expr.map_bv(f)),
-                        body_expr  : Box::new(body_expr.map_bv(f))},
-      Expr::IfThenElse {ref cond, ref true_branch, ref false_branch}
-        => Expr::IfThenElse
-                       {cond         : Box::new(cond.map_bv(f)),
-                        true_branch  : Box::new(true_branch.map_bv(f)),
-                        false_branch : Box::new(false_branch.map_bv(f))},
-      Expr::Extract    {low_bit, high_bit, ref arg}
-        => Expr::Extract
-                       {low_bit  : low_bit,
-                        high_bit : high_bit,
-                        arg      : Box::new(arg.map_bv(f))},
-      Expr::Concat     {ref low, ref high}
-        => Expr::Concat
-                       {low  : Box::new(low.map_bv(f)),
-                        high : Box::new(high.map_bv(f))},
-      Expr::Unknown    {ref description, typ}
-        => Expr::Unknown {description : description.clone(),
-                          typ         : typ},
-      Expr::Var(ref v) => Expr::Var(v.clone())
-    }
-  }
-}
-
-impl Expr<BitVector> {
-  unsafe fn of_bap(expr : *mut bap_sys::bap_expr) -> Self {
+impl Expr {
+  unsafe fn of_bap(expr : *mut bap_sys::bap_expr, ctx: &Context) -> Self {
     use bap_sys::Enum_bap_expr_kind::*;
     let mut expr = *expr;
     match expr.kind {
       BAP_EXPR_LOAD    => Expr::Load {
-        memory : Box::new(Expr::of_bap((*expr.load()).memory)),
-        index  : Box::new(Expr::of_bap((*expr.load()).index)),
+        memory : Box::new(Expr::of_bap((*expr.load()).memory, ctx)),
+        index  : Box::new(Expr::of_bap((*expr.load()).index, ctx)),
         endian : Endian::of_bap((*expr.load()).endian),
         size   : (*expr.load()).size as BitSize
       },
       BAP_EXPR_STORE   => Expr::Store {
-        memory : Box::new(Expr::of_bap((*expr.store()).memory)),
-        index  : Box::new(Expr::of_bap((*expr.store()).index)),
-        value  : Box::new(Expr::of_bap((*expr.store()).value)),
+        memory : Box::new(Expr::of_bap((*expr.store()).memory, ctx)),
+        index  : Box::new(Expr::of_bap((*expr.store()).index, ctx)),
+        value  : Box::new(Expr::of_bap((*expr.store()).value, ctx)),
         endian : Endian::of_bap((*expr.store()).endian),
         size   : (*expr.store()).size as BitSize
       },
       BAP_EXPR_BINOP   => Expr::BinOp {
         op  : BinOp::from_u32((*expr.binop()).op as u32).unwrap(),
-        lhs : Box::new(Expr::of_bap((*expr.binop()).lhs)),
-        rhs : Box::new(Expr::of_bap((*expr.binop()).rhs))
+        lhs : Box::new(Expr::of_bap((*expr.binop()).lhs, ctx)),
+        rhs : Box::new(Expr::of_bap((*expr.binop()).rhs, ctx))
       },
       BAP_EXPR_UNOP    => Expr::UnOp {
         op  : UnOp::from_u32((*expr.unop()).op as u32).unwrap(),
-        arg : Box::new(Expr::of_bap((*expr.unop()).arg))
+        arg : Box::new(Expr::of_bap((*expr.unop()).arg, ctx))
       },
       BAP_EXPR_VAR     => Expr::Var(Var::of_bap(*expr.var())),
-      BAP_EXPR_IMM     => Expr::BitVector(BitVector::of_bap(*expr.imm())),
+      BAP_EXPR_IMM     => Expr::BitVector(bitvector::BitVector::of_bap(ctx, &BitVector::of_bap(*expr.imm()))),
       BAP_EXPR_CAST    => Expr::Cast {
         kind  : CastKind::from_u32((*expr.cast())._type as u32).unwrap(),
         width : (*expr.cast()).width as BitSize,
-        val   : Box::new(Expr::of_bap((*expr.cast()).val))
+        val   : Box::new(Expr::of_bap((*expr.cast()).val, ctx))
       },
       BAP_EXPR_LET     => Expr::Let {
         bound_var  : Var::of_bap((*expr._let()).bound_var),
-        bound_expr : Box::new(Expr::of_bap((*expr._let()).bound_expr)),
-        body_expr  : Box::new(Expr::of_bap((*expr._let()).body_expr))
+        bound_expr : Box::new(Expr::of_bap((*expr._let()).bound_expr, ctx)),
+        body_expr  : Box::new(Expr::of_bap((*expr._let()).body_expr, ctx))
       },
       BAP_EXPR_UNK     => Expr::Unknown {
         description :
@@ -534,91 +481,69 @@ impl Expr<BitVector> {
         typ : Type::of_bap((*expr.unknown())._type)
       },
       BAP_EXPR_ITE     => Expr::IfThenElse {
-        cond         : Box::new(Expr::of_bap((*expr.ite()).cond)),
-        true_branch  : Box::new(Expr::of_bap((*expr.ite()).t)),
-        false_branch : Box::new(Expr::of_bap((*expr.ite()).f))
+        cond         : Box::new(Expr::of_bap((*expr.ite()).cond, ctx)),
+        true_branch  : Box::new(Expr::of_bap((*expr.ite()).t, ctx)),
+        false_branch : Box::new(Expr::of_bap((*expr.ite()).f, ctx))
       },
       BAP_EXPR_EXTRACT => Expr::Extract {
-        arg      : Box::new(Expr::of_bap((*expr.extract()).val)),
+        arg      : Box::new(Expr::of_bap((*expr.extract()).val, ctx)),
         high_bit : (*expr.extract()).high_bit as BitSize,
         low_bit  : (*expr.extract()).low_bit as BitSize
       },
       BAP_EXPR_CONCAT  => Expr::Concat {
-        low  : Box::new(Expr::of_bap((*expr.concat()).low)),
-        high : Box::new(Expr::of_bap((*expr.concat()).high))
+        low  : Box::new(Expr::of_bap((*expr.concat()).low, ctx)),
+        high : Box::new(Expr::of_bap((*expr.concat()).high, ctx))
       },
     }
   }
 }
 
-pub enum Stmt<BV> {
-  Jump(Expr<BV>),
+pub enum Stmt {
+  Jump(Expr),
   Special(String),
   CPUException(u64),
   Move       {lhs         : Var,
-              rhs         : Expr<BV>},
-  While      {cond        : Expr<BV>,
-              body        : Vec<Stmt<BV>>},
-  IfThenElse {cond        : Expr<BV>,
-              then_clause : Vec<Stmt<BV>>,
-              else_clause : Vec<Stmt<BV>>}
+              rhs         : Expr},
+  While      {cond        : Expr,
+              body        : Vec<Stmt>},
+  IfThenElse {cond        : Expr,
+              then_clause : Vec<Stmt>,
+              else_clause : Vec<Stmt>}
 }
 
-impl Stmt<BitVector> {
-  unsafe fn of_bap(stmt : *mut bap_sys::bap_stmt) -> Self {
+impl Stmt {
+  unsafe fn of_bap(stmt : *mut bap_sys::bap_stmt, ctx: &Context) -> Self {
     use std::ffi::CStr;
     use bap_sys::Enum_bap_stmt_kind::*;
     let mut stmt = *stmt;
     match stmt.kind {
       BAP_STMT_MOVE => Stmt::Move {
         lhs : Var::of_bap((*stmt._move()).lhs),
-        rhs : Expr::of_bap((*stmt._move()).rhs)
+        rhs : Expr::of_bap((*stmt._move()).rhs, ctx)
       },
-      BAP_STMT_JMP => Stmt::Jump(Expr::of_bap(*stmt.jmp())),
+      BAP_STMT_JMP => Stmt::Jump(Expr::of_bap(*stmt.jmp(), ctx)),
       BAP_STMT_SPECIAL => Stmt::Special(String::from_utf8_lossy(
               CStr::from_ptr(*stmt.special()).to_bytes()).into_owned()),
       BAP_STMT_WHILE => Stmt::While {
-          cond : Expr::of_bap((*stmt.s_while()).cond),
-          body : Stmt::of_stmts((*stmt.s_while()).body)
+          cond : Expr::of_bap((*stmt.s_while()).cond, ctx),
+          body : Stmt::of_stmts((*stmt.s_while()).body, ctx)
       },
       BAP_STMT_IF => Stmt::IfThenElse {
-          cond : Expr::of_bap((*stmt.ite()).cond),
-          then_clause : Stmt::of_stmts((*stmt.ite()).t),
-          else_clause : Stmt::of_stmts((*stmt.ite()).f)
+          cond : Expr::of_bap((*stmt.ite()).cond, ctx),
+          then_clause : Stmt::of_stmts((*stmt.ite()).t, ctx),
+          else_clause : Stmt::of_stmts((*stmt.ite()).f, ctx)
       },
       BAP_STMT_CPU_EXN => Stmt::CPUException(*stmt.cpu_exn() as u64),
     }
   }
-  unsafe fn of_stmts(stmts : *mut *mut bap_sys::bap_stmt) -> Vec<Self> {
+  unsafe fn of_stmts(stmts : *mut *mut bap_sys::bap_stmt, ctx: &Context) -> Vec<Self> {
     let mut index = 0;
     let mut res = Vec::new();
     while !(*stmts.offset(index)).is_null() {
-      res.push(Stmt::of_bap(*stmts.offset(index)));
+      res.push(Stmt::of_bap(*stmts.offset(index), ctx));
       index += 1;
     }
     res
-  }
-}
-
-impl <BV> Stmt<BV> {
-  pub fn map_bv<BV2, F>(&self, f : &F) -> Stmt<BV2>
-    where F : Fn(&BV) -> BV2 {
-    match *self {
-      Stmt::Jump(ref e) => Stmt::Jump(e.map_bv(f)),
-      Stmt::Special(ref s) => Stmt::Special(s.clone()),
-      Stmt::CPUException(n) => Stmt::CPUException(n),
-      Stmt::Move {ref lhs, ref rhs} =>
-          Stmt::Move {lhs : lhs.clone(),
-                      rhs : rhs.map_bv(f)},
-      Stmt::While {ref cond, ref body} => Stmt::While
-        {cond : cond.map_bv(f),
-         body : body.iter().map(|x|{x.map_bv(f)}).collect()},
-      Stmt::IfThenElse {ref cond, ref then_clause, ref else_clause} =>
-        Stmt::IfThenElse
-        {cond        : cond.map_bv(f),
-         then_clause : then_clause.iter().map(|x|{x.map_bv(f)}).collect(),
-         else_clause : else_clause.iter().map(|x|{x.map_bv(f)}).collect()}
-    }
   }
 }
 impl BitVector {
@@ -750,10 +675,10 @@ impl Instruction {
       bap_sys::bap_insn_is_call(self.bap_sys) != 0
     }
   }
-  pub fn stmts(&self, _ctx : &Context) -> Vec<Stmt<BitVector>> {
+  pub fn stmts(&self, ctx : &Context) -> Vec<Stmt> {
     unsafe {
       let narr = bap_sys::bap_insn_get_stmts(self.bap_sys);
-      Stmt::of_stmts(narr)
+      Stmt::of_stmts(narr, ctx)
     }
   }
   unsafe fn of_bap(bap_sys : bap_sys::bap_insn) -> Self {

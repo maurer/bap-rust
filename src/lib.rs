@@ -24,12 +24,11 @@ pub use expert::BitSize;
 pub use expert::Endian;
 pub use expert::Arch;
 pub use expert::CastKind;
+pub use expert::Stmt;
 
 pub use bitvector::{BitVector, Addr};
 
 use expert as ex;
-
-pub type Stmt = ex::Stmt<BitVector>;
 
 #[derive(Debug)]
 pub struct Symbol {
@@ -111,9 +110,7 @@ pub fn lift(addr : &BitVector,
     let insns = disas.instructions(&ctx).into_iter();
     insns.map(|di|{(BitVector::of_bap(&ctx, &di.start),
                     BitVector::of_bap(&ctx, &di.end),
-                    di.insn.stmts(&ctx).iter().map(|i|{i.map_bv(&|x|{
-                        BitVector::of_bap(&ctx, x)
-                    })}).collect(),
+                    di.insn.stmts(&ctx),
                     di.insn.is_call(&ctx))}).collect()
   })
 }
