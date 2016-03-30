@@ -260,7 +260,7 @@ fn run_byteweight() {
   })
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub enum Endian {
   Little,
@@ -317,7 +317,7 @@ impl Arch {
 
 pub type BitSize = u16;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub enum Type {
   BitVector(BitSize),
@@ -338,7 +338,7 @@ impl Type {
   }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Hash, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub struct Var {
   pub name    : String,
@@ -359,7 +359,7 @@ impl Var {
   }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 #[repr(u32)]
 pub enum BinOp {
@@ -391,7 +391,7 @@ impl BinOp {
 }
 
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 #[repr(u32)]
 pub enum UnOp {
@@ -405,7 +405,7 @@ impl UnOp {
 }
 
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
 #[cfg_attr(feature="json", derive(RustcEncodable,RustcDecodable))]
 #[repr(u32)]
 pub enum CastKind {
@@ -420,7 +420,7 @@ impl CastKind {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Hash, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub enum Expr {
   Var(Var),
@@ -521,7 +521,7 @@ impl Expr {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Hash, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub enum Stmt {
   Jump(Expr),
