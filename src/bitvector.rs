@@ -112,8 +112,11 @@ impl BitVector {
       assert!(num.bits() <= len);
       let mut bv = BitVec::from_bytes(&num.to_bytes_le());
       let bvlen = bv.len();
-      bv.grow(len - bvlen, false);
-      bv.truncate(len);
+      if len > bvlen {
+        bv.grow(len - bvlen, false);
+      } else {
+        bv.truncate(len);
+      }
       BitVector::new(&bv)
   }
   pub fn into_bitvec(self) -> BitVec {
