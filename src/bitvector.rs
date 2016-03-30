@@ -20,16 +20,21 @@ use rustc_serialize::{Encoder,Decoder,Encodable,Decodable};
 #[cfg(feature = "json")]
 impl Encodable for BitVector {
     fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        try!(self.unum.encode(s));
-        self.native.len().encode(s)
+        s.emit_struct("BitVector", 2, |s| {
+            try!(s.emit_struct_field("unum", 0, |s| self.unum.encode(s)));
+            s.emit_struct_field("len", 1, |s| self.native.len().encode(s))
+        })
     }
 }
 
 #[cfg(feature = "json")]
 impl Decodable for BitVector {
     fn decode<D: Decoder>(d: &mut D) -> Result<Self, D::Error> {
-        let unum : BigUint = try!(BigUint::decode(d));
-        let len : usize = try!(usize::decode(d));
+        let (unum, len) : (BigUint, usize) = try!(d.read_struct("BitVector", 2, |d| {
+            let unum = try!(d.read_struct_field("unum", 0, |d| BigUint::decode(d)));
+            let len = try!(d.read_struct_field("len", 1, |d| usize::decode(d)));
+            Ok((unum, len))
+        }));
         Ok(BitVector::new_unsigned(unum, len))
     }
 }
