@@ -9,7 +9,7 @@ before_script:
   # Install libbap
   - opam init -y
   - eval `opam config env`
-  - opam pin add bap git://github.com/maurer/bap#0.9.9 -y
+  - travis_wait opam pin add bap git://github.com/maurer/bap#stable
   - opam install -y oasis
   - cd libbap
   - oasis setup
@@ -49,6 +49,7 @@ addons:
     - time
     - opam
     - aspcud
+    - dejagnu
 
 rust:
   - nightly

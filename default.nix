@@ -1,5 +1,5 @@
-{ pkgs ? (import <local> {}).pkgs }:
+{ pkgs ? (import ../nixpkgs {}).pkgs }:
 
 with pkgs;
 
-lib.allCall (import ./package.nix) { }
+callPackage ./package.nix { }
