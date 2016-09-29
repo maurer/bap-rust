@@ -3,7 +3,6 @@ use libc::size_t;
 use std::sync::{Once, ONCE_INIT};
 use std::marker::PhantomData;
 use std::ffi::CStr;
-use num::traits::FromPrimitive;
 use bitvector;
 
 pub struct Context {
