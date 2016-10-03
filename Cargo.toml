@@ -24,7 +24,6 @@ postgres = {version = "*", optional = true, features = ["bit-vec"]}
 
 [dependencies.holmes]
 git = "https://github.com/maurer/holmes"
-rev = "1467cb49d950c459f2e9553762835b7fd273d2f5"
 optional = true
 
 [dependencies.rustc-serialize]
