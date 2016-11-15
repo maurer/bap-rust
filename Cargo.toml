@@ -20,7 +20,7 @@ bap-sys = {path = "./bap-sys"}
 bit-vec = "0.4"
 byteorder = "0.4"
 
-postgres = {version = "*", optional = true, features = ["bit-vec"]}
+postgres = {version = "0.11", optional = true, features = ["bit-vec"]}
 
 [dependencies.holmes]
 git = "https://github.com/maurer/holmes"
