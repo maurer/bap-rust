@@ -1,4 +1,3 @@
+#![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
-extern crate libc;
-pub use libc::*;
-include!("bap.rs");
+include!(concat!(env!("OUT_DIR"), "/bap.rs"));
