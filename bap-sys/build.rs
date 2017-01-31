@@ -27,9 +27,14 @@ fn main() {
         println!("cargo:include={}", include_dir);
     }
 
+    // This line should not be necessary, but bindgen seems to be ignoring
+    // .link()
+    println!("cargo:rustc-link-lib=bap");
+
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindgen::builder()
         .header("bap-sys.h")
+        .link("bap")
         .no_unstable_rust()
         .generate()
         .expect("Unable to generate bindings")
