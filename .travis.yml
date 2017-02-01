@@ -26,7 +26,7 @@ before_script:
 
 sudo: false
 addons:
-  postgresql: 9.3
+  postgresql: 9.5
   apt:
     sources:
     - avsm
@@ -38,7 +38,7 @@ addons:
     - clang-3.9
     - libclang-3.9-dev
     - curl
-    - libcurl4-gnutls-dev
+    - libcurl4-openssl-dev
     - libgmp-dev
     - libssl-dev
     - libzip-dev
@@ -68,7 +68,6 @@ script:
   - travis-cargo --only stable doc
 
 after_success:
-  - travis-cargo coveralls --no-sudo --verify
   - travis-cargo --only stable doc-upload
 
 env:
