@@ -19,6 +19,11 @@ use bit_vec::BitVec;
 type char = ::std::os::raw::c_char;
 #[allow(non_camel_case_types)]
 type size_t = ::std::os::raw::c_int;
+#[allow(non_camel_case_types)]
+type int = ::std::os::raw::c_int;
+
+/// Type representing a data size in bits
+pub type BitSize = u16;
 
 // Bail out with the most recent error (for cases we can't report cleanly, like init)
 unsafe fn bap_panic() {
@@ -28,6 +33,27 @@ unsafe fn bap_panic() {
 
 /// Type alias for `Result` with a BAP error
 pub type Result<T> = result::Result<T, String>;
+
+// Rust doesn't have a trait for `as` for some reason
+trait CastFrom<T> {
+    fn cast(T) -> Self;
+}
+
+impl CastFrom<int> for usize {
+    fn cast(v: int) -> Self {
+        v as Self
+    }
+}
+impl CastFrom<int> for u64 {
+    fn cast(v: int) -> Self {
+        v as Self
+    }
+}
+impl CastFrom<int> for BitSize {
+    fn cast(v: int) -> Self {
+        v as Self
+    }
+}
 
 // Wraps a potentially errored BAP value into a `Result` type
 unsafe fn bap_error<T>(v: *mut T) -> Result<*mut T> {
@@ -50,6 +76,14 @@ unsafe fn bap_string(v: *mut char) -> String {
     let out = CStr::from_ptr(v).to_string_lossy().into_owned();
     bap_release(v);
     out
+}
+
+// Converts a BAP optional integer into a rust optional unsigned
+fn bap_opt_int<T: CastFrom<int>>(v: int) -> Option<T> {
+    match v {
+        -1 => None,
+        _ => Some(CastFrom::<int>::cast(v)),
+    }
 }
 
 // Ensures `bap_init` and `bap_load_plugins` are called exactly once
@@ -91,10 +125,11 @@ impl Bap {
 }
 
 enum_from_primitive!{
-#[derive(Clone, Copy, Debug, PartialEq)]
 /// Native enum for BAP architectures
 #[allow(missing_docs)]
 #[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 #[repr(i32)]
 pub enum Arch {
     AArch64Be = 0,
@@ -238,6 +273,8 @@ abs_type!(bap_stmt_t, Statement);
 abs_type!(bap_exp_t, Expression);
 /// BAP type representing a BIL variable
 abs_type!(bap_var_t, Variable);
+/// BAP type representing a BIL type
+abs_type!(bap_type_t, Type);
 
 impl<'a> Image<'a> {
     /// Create an `Image` by having BAP read a file from disk
@@ -770,9 +807,27 @@ impl<'a> Statement<'a> {
             })
         }
     }
+    /// Gets the cpu exception number, if present
+    pub fn cpuexn(&self) -> Option<u64> {
+        bap_opt_int(unsafe { bap_sys::bap_stmt_cpuexn(self.bap_sys) })
+    }
+    /// Gets the jump target expression, if present
+    pub fn jmp(&self) -> Option<Expression> {
+        unsafe {
+            bap_option(bap_sys::bap_stmt_jmp(self.bap_sys)).map(|jmp| {
+                Expression {
+                    bap_sys: jmp,
+                    rc: rc1(),
+                    extra: PhantomData,
+                }
+            })
+        }
+    }
 }
 
 /// Tag indicating which variety of expression something is
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub enum ExpressionTag {
     /// Unary operation
     /// unop(exp)
@@ -825,6 +880,8 @@ impl ExpressionTag {
 }
 
 /// Unary Operations
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub enum UnOp {
     /// Bitwise not
     Not,
@@ -845,6 +902,8 @@ impl UnOp {
 }
 
 /// Binary Operations
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub enum BinOp {
     /// Signed less than or equal
     SignedLessEqual,
@@ -916,6 +975,8 @@ impl BinOp {
 }
 
 /// BIL Cast kinds
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 pub enum Cast {
     /// Cast prefers low bits
     Low,
@@ -941,6 +1002,28 @@ impl Cast {
     }
 }
 
+/// Byte order
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
+pub enum Endian {
+    /// Least significant first
+    Little,
+    /// Most significant first
+    Big,
+}
+
+impl Endian {
+    fn from_bap(endian: bap_sys::bap_endian_t) -> Option<Self> {
+        use bap_sys::bap_endian_t::*;
+        use self::Endian::*;
+        match endian {
+            BAP_ENDIAN_INVALID => None,
+            BAP_ENDIAN_LITTLE => Some(Little),
+            BAP_ENDIAN_BIG => Some(Big),
+        }
+    }
+}
+
 impl<'a> Expression<'a> {
     /// Get the tag indicating what kind of expression this is
     pub fn tag(&self) -> Option<ExpressionTag> {
@@ -957,6 +1040,10 @@ impl<'a> Expression<'a> {
                 }
             })
         }
+    }
+    /// Gets the size of a memory read/write for the expression, if present
+    pub fn size(&self) -> Option<BitSize> {
+        bap_opt_int(unsafe { bap_sys::bap_exp_size(self.bap_sys) })
     }
     /// Gets the address argument for the expression, if present
     pub fn addr(&self) -> Option<Expression> {
@@ -982,6 +1069,19 @@ impl<'a> Expression<'a> {
             })
         }
     }
+    /// Gets the variable argument of the BIL statement, if present
+    pub fn var(&self) -> Option<Variable> {
+        unsafe {
+            bap_option(bap_sys::bap_exp_var(self.bap_sys)).map(|var| {
+                Variable {
+                    bap_sys: var,
+                    rc: rc1(),
+                    extra: PhantomData,
+                }
+            })
+        }
+    }
+
     /// Gets the left hand side for the expression, if present
     pub fn lhs(&self) -> Option<Expression> {
         unsafe {
@@ -1031,30 +1131,130 @@ impl<'a> Expression<'a> {
         }
     }
     /// Gets the target width of the cast, if present
-    pub fn cast_size(&self) -> Option<usize> {
-        unsafe {
-            match bap_sys::bap_exp_cast_size(self.bap_sys) {
-                -1 => None,
-                v => Some(v as usize),
-            }
-        }
+    pub fn cast_size(&self) -> Option<BitSize> {
+        bap_opt_int(unsafe { bap_sys::bap_exp_cast_size(self.bap_sys) })
     }
     /// Gets the low bit of the extraction, if present
-    pub fn extract_lobit(&self) -> Option<usize> {
-        unsafe {
-            match bap_sys::bap_exp_extract_lobit(self.bap_sys) {
-                -1 => None,
-                v => Some(v as usize),
-            }
-        }
+    pub fn extract_lobit(&self) -> Option<BitSize> {
+        bap_opt_int(unsafe { bap_sys::bap_exp_extract_lobit(self.bap_sys) })
     }
     /// Gets the high bit of the extraction, if present
-    pub fn extract_hibit(&self) -> Option<usize> {
+    pub fn extract_hibit(&self) -> Option<BitSize> {
+        bap_opt_int(unsafe { bap_sys::bap_exp_extract_hibit(self.bap_sys) })
+    }
+    /// Gets the endianness of a store or load, if present
+    pub fn endian(&self) -> Option<Endian> {
+        Endian::from_bap(unsafe { bap_sys::bap_exp_endian(self.bap_sys) })
+    }
+    /// Gets the description of an unknown expression, if present
+    pub fn unknown_msg(&self) -> Option<String> {
+        unsafe { bap_option(bap_sys::bap_exp_unknown_msg(self.bap_sys)).map(|msg| bap_string(msg)) }
+    }
+    /// Gets the type of an unknown expression, if present
+    pub fn unknown_type(&self) -> Option<Type> {
         unsafe {
-            match bap_sys::bap_exp_extract_hibit(self.bap_sys) {
-                -1 => None,
-                v => Some(v as usize),
-            }
+            bap_option(bap_sys::bap_exp_unknown_typ(self.bap_sys)).map(|type_| {
+                Type {
+                    bap_sys: type_,
+                    rc: rc1(),
+                    extra: PhantomData,
+                }
+            })
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// Which kind of type a BAP `Type` is
+pub enum TypeTag {
+    /// Type represents a memory object mapping addresses to values
+    Memory,
+    /// Type represents an immediate vector of bits
+    Immediate,
+}
+
+impl TypeTag {
+    fn from_bap(tag: bap_sys::bap_type_tag_t) -> Option<Self> {
+        use bap_sys::bap_type_tag_t::*;
+        use self::TypeTag::*;
+        match tag {
+            BAP_TYPE_TAG_INVALID => None,
+            BAP_TYPE_TAG_MEM => Some(Memory),
+            BAP_TYPE_TAG_IMM => Some(Immediate),
+        }
+    }
+}
+
+impl<'a> Type<'a> {
+    /// Find out what kind of type this is
+    pub fn tag(&self) -> Option<TypeTag> {
+        TypeTag::from_bap(unsafe { bap_sys::bap_type_tag(self.bap_sys) })
+    }
+    /// Get the size of an `Immediate` type in bits
+    pub fn imm(&self) -> Option<BitSize> {
+        bap_opt_int(unsafe { bap_sys::bap_type_imm_size(self.bap_sys) })
+    }
+    /// Get the address size for a `Memory` type
+    pub fn addr_size(&self) -> Option<BitSize> {
+        bap_opt_int(unsafe { bap_sys::bap_type_addr_size(self.bap_sys) })
+    }
+    /// Get the cell size for a `Memory` type
+    pub fn cell_size(&self) -> Option<BitSize> {
+        bap_opt_int(unsafe { bap_sys::bap_type_value_size(self.bap_sys) })
+    }
+}
+
+impl<'a> Variable<'a> {
+    /// Get the variable's name
+    pub fn name(&self) -> String {
+        unsafe { bap_string(bap_sys::bap_var_name(self.bap_sys)) }
+    }
+    /// Get the variable's type
+    pub fn type_(&self) -> Type {
+        Type {
+            bap_sys: unsafe { bap_sys::bap_var_type(self.bap_sys) },
+            rc: rc1(),
+            extra: PhantomData,
+        }
+    }
+    /// Whether the variable is a temporary
+    pub fn is_temp(&self) -> bool {
+        unsafe { bap_sys::bap_var_is_virtual(self.bap_sys) }
+    }
+    /// Which definition of the variable this is
+    pub fn index(&self) -> u64 {
+        (unsafe { bap_sys::bap_var_index(self.bap_sys) }) as u64
+    }
+}
+
+impl<'a> Memory<'a> {
+    /// Get the beginning of the memory
+    pub fn min_addr(&self) -> Word<'a> {
+        Word {
+            bap_sys: unsafe { bap_sys::bap_memory_min_addr(self.bap_sys) },
+            rc: rc1(),
+            extra: PhantomData,
+        }
+    }
+    /// Get the end of the memory
+    pub fn max_addr(&self) -> Word<'a> {
+        Word {
+            bap_sys: unsafe { bap_sys::bap_memory_max_addr(self.bap_sys) },
+            rc: rc1(),
+            extra: PhantomData,
+        }
+    }
+    /// Get the length of the memory
+    pub fn len(&self) -> usize {
+        (unsafe { bap_sys::bap_memory_length(self.bap_sys) }) as usize
+    }
+    /// Get the data backing the memory
+    pub fn data(&self) -> Vec<u8> {
+        unsafe {
+            let len = self.len();
+            // Returned pointer is borrowed, don't free it
+            let data = bap_sys::bap_memory_data(self.bap_sys) as *mut u8;
+            slice::from_raw_parts(data, len).to_owned()
         }
     }
 }

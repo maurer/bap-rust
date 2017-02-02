@@ -11,6 +11,7 @@
 //! For more detailed documentation, see the
 //! [BAP Documentation](http://binaryanalysisplatform.github.io/bap/api/v1.1.0/argot_index.html)
 //! which this binds.
+#![warn(missing_docs)]
 extern crate bap_sys;
 extern crate bit_vec;
 extern crate byteorder;
@@ -26,6 +27,6 @@ extern crate postgres;
 #[cfg(feature = "json")]
 extern crate rustc_serialize;
 extern crate num;
-#[warn(missing_docs)]
 
 pub mod basic;
+pub mod high;
