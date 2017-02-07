@@ -4,7 +4,6 @@ use bit_vec::BitVec;
 use num::bigint::BigUint;
 use num::traits::FromPrimitive;
 use num::pow;
-use std::hash::{Hash, Hasher};
 
 use std::ops::BitAnd;
 use basic;
@@ -12,6 +11,7 @@ use basic;
 /// A `BitVector` is a wrapper around a `BitVec` allowing it to do perform arbitrary-but-fixed
 /// width two's complement arithmetic. This is useful when talking about CPU-level values, which
 /// may be odd things like 31 bits, or things larger than traditional integer types like 128 bits.
+#[derive(Clone, Hash, PartialEq, PartialOrd)]
 pub struct BitVector {
     native: BitVec,
     unum: BigUint,
@@ -47,30 +47,6 @@ impl ::std::fmt::Debug for BitVector {
                "BitVector {{ native: {:?}, unum: {:?} }}",
                self.native,
                self.unum)
-    }
-}
-
-impl Clone for BitVector {
-    fn clone(&self) -> Self {
-        BitVector::new(&self.native)
-    }
-}
-
-impl Hash for BitVector {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.native.hash(state)
-    }
-}
-
-impl PartialEq for BitVector {
-    fn eq(&self, other: &Self) -> bool {
-        self.native == other.native
-    }
-}
-
-impl PartialOrd for BitVector {
-    fn partial_cmp(&self, other: &Self) -> Option<::std::cmp::Ordering> {
-        self.native.partial_cmp(&other.native)
     }
 }
 
