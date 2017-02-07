@@ -1,3 +1,3 @@
-[submodule "libbap"]
-	path = libbap
-	url = https://github.com/maurer/libbap
+[submodule "bap-bindings"]
+	path = bap-bindings
+	url = https://github.com/BinaryAnalysisPlatform/bap-bindings

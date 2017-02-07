@@ -9,12 +9,14 @@ before_script:
   # Install libbap
   - opam init -y
   - eval `opam config env`
-  - travis_wait opam pin add bap git://github.com/maurer/bap#stable
-  - opam install -y oasis
-  - cd libbap
-  - oasis setup
+  - travis_wait opam pin add bap git://github.com/BinaryAnalysisPlatform/bap#v1.1.0
+  - cd bap-bindings
+  - opam install ctypes ctypes-foreign -y
+  - autoconf
   - ./configure --prefix $HOME/.local
-  - make
+  - travis_wait make
+  - mkdir -p $HOME/.local/lib
+  - mkdir -p $HOME/.local/include
   - make install
   - cd ..
   # Fetch travis-cargo
@@ -24,20 +26,23 @@ before_script:
 
 sudo: false
 addons:
-  postgresql: 9.3
+  postgresql: 9.5
   apt:
     sources:
     - avsm
+    - ubuntu-toolchain-r-test
+    - llvm-toolchain-precise-3.9
     packages:
     - camlp4
     - camlp4-extra
-    - clang
+    - clang-3.9
+    - libclang-3.9-dev
     - curl
-    - libcurl4-gnutls-dev
+    - libcurl4-openssl-dev
     - libgmp-dev
     - libssl-dev
     - libzip-dev
-    - llvm
+    - llvm-3.9-dev
     - llvm-3.4-dev
     - m4
     - ocaml
@@ -57,18 +62,20 @@ rust:
   - stable
 
 script:
-  - travis-cargo build
-  - travis-cargo test
-  - travis-cargo bench
-  - travis-cargo --only stable doc
+  - travis-cargo build -- --all-features
+  - travis-cargo test -- --all-features
+  - travis-cargo bench -- --all-features
+  - travis-cargo --only stable doc -- --all-features
 
 after_success:
-  - travis-cargo coveralls --no-sudo --verify
   - travis-cargo --only stable doc-upload
 
 env:
   global:
     - TRAVIS_CARGO_NIGHTLY_FEATURE=""
-    - LIBRARY_PATH=$HOME/.local/lib:$LIBRARY_PATH
-    - LD_LIBRARY_PATH=$HOME/.local/lib:$LD_LIBRARY_PATH
+    - BAP_LIB_DIR=$HOME/.local/lib
+    - BAP_INCLUDE_DIR=$HOME/.local/include
+    - C_INCLUDE_PATH=$HOME/.local/include
+    - LIBCLANG_PATH=/usr/lib/clang/3.9/lib/linux/
+    - LLVM_CONFIG_PATH=/usr/bin/llvm-config-3.9
     - secure: "NEgBVKwxpPPtpIbSVTtSB7fUtVFrjE6FleFv3jwPRVZSYiINl7N9r5EmgB1Rb60KCLndD7kbguOjoABvVhpwR5zbS8GybgMa/iWrdr36sRGooFzEO+ItH2z659lUh6af8YF8C2f0DsdpOG8GV4mO0pmeA3bGOHyLAboNiB6RQQphogcBMolJ0P+y9WPBIvyoyTKK2H4H4/tpGOuZ82ijc2Eq0FIgQBWdNsYdPbUUvuMnmt7SY3rRvfVtibbl1NvywMttjQri/g2UKh0H+foDGVWJP99lYIcsWp/IiwzmRfCknOLIYrFLn/u3qBybN6NiJgatQbDflxhgxgTv5QkeIXvx2/wsHqP2HZZAxaIKKYwQ7QlEZiEeYxXa+dNttVTOuheU7ENmPocU0+HMZgphdsh36qvphSHKbAaJZEF5GopQ6zbLa0ZVjvSUR+LN8zoH6JZPA4nS4NI/gzvM1g0VdOuBZU64PRmHHCeUK6RCuBQP01XBbfgCFcWGgSl/BiIPwN7b7q/GtzHhfPQVqL6egY1JG3+j+xZkJAU/aRh6RaX2euqT6NHUaGQjBUTmf92LuDHsq8AfyWSZI8eXBr1RoYwLeqedn3ljMoEmbmAOi5K054zHlPSLikOC5/1oWsojHJt4nYoZyjqOfOxdweVRxoreqtVKJP1B7MhSvbDSHfA="

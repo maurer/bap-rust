@@ -13,17 +13,17 @@ holmes_support = ["holmes", "postgres"]
 json = ["rustc-serialize"]
 
 [dependencies]
-libc = "0.2"
-num = "0.1"
-enum_primitive = "0.1"
 bap-sys = {path = "./bap-sys"}
 bit-vec = "0.4"
 byteorder = "0.4"
+lazy_static = "0.2"
+enum_primitive = "0.1"
+num = "0.1"
 
-postgres = {version = "0.11", optional = true, features = ["bit-vec"]}
+postgres = {version = "0.13", optional = true, features = ["with-bit-vec"]}
 
 [dependencies.holmes]
-git = "https://github.com/maurer/holmes"
+version = "0.1"
 optional = true
 
 [dependencies.rustc-serialize]
