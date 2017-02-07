@@ -130,7 +130,7 @@ enum_from_primitive!{
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
-#[repr(i32)]
+#[repr(i16)]
 pub enum Arch {
     AArch64Be = 0,
     ArmV7 = 1,
@@ -171,11 +171,18 @@ pub enum Arch {
 }
 
 impl Arch {
+    #[cfg(feature = "holmes_support")]
+    /// Gets a reference to the Arch as an `i16` (you probably don't want this)
+    // Only legal due to #[repr(i16)]. If that changes, this type+name must change
+    pub fn i16_ref(&self) -> &i16 {
+        unsafe { ::std::mem::transmute(self) }
+    }
+
     fn from_bap(a: bap_sys::bap_arch_t) -> Option<Self> {
         Arch::from_i32(a as i32)
     }
     fn to_bap(&self) -> bap_sys::bap_arch_t {
-        unsafe { ::std::mem::transmute(*self) }
+        unsafe { ::std::mem::transmute(*self as i32) }
     }
 }
 

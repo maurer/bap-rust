@@ -30,3 +30,6 @@ extern crate num;
 
 pub mod basic;
 pub mod high;
+#[cfg(feature = "holmes_support")]
+pub mod holmes_support;
+mod printers;

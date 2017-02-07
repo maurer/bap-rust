@@ -20,7 +20,7 @@ lazy_static = "0.2"
 enum_primitive = "0.1"
 num = "0.1"
 
-postgres = {version = "0.11", optional = true, features = ["bit-vec"]}
+postgres = {version = "0.13", optional = true, features = ["with-bit-vec"]}
 
 [dependencies.holmes]
 version = "0.1"

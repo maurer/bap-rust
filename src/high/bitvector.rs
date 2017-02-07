@@ -23,8 +23,8 @@ use rustc_serialize::{Encoder, Decoder, Encodable, Decodable};
 impl Encodable for BitVector {
     fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
         s.emit_struct("BitVector", 2, |s| {
-            try!(s.emit_struct_field("unum", 0, |s| self.unum().encode(s)));
-            s.emit_struct_field("len", 1, |s| self.native().len().encode(s))
+            try!(s.emit_struct_field("unum", 0, |s| self.unum.encode(s)));
+            s.emit_struct_field("len", 1, |s| self.native.len().encode(s))
         })
     }
 }
@@ -121,6 +121,10 @@ impl BitVector {
     /// Get the length in bits of the `BitVector`
     pub fn len(&self) -> usize {
         self.native.len()
+    }
+    /// Get the value of the `BitVector` as an unsigned bignum
+    pub fn unum(&self) -> BigUint {
+        self.unum.clone()
     }
 }
 
