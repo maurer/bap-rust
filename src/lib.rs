@@ -23,6 +23,7 @@ extern crate enum_primitive;
 #[macro_use]
 extern crate holmes;
 #[cfg(feature = "holmes_support")]
+#[macro_use]
 extern crate postgres;
 #[cfg(feature = "json")]
 extern crate rustc_serialize;

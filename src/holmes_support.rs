@@ -3,14 +3,19 @@
 use holmes::pg::dyn::values::ValueT;
 use holmes::pg::dyn::types::TypeT;
 use high::bitvector::BitVector;
+use high::bil::Variable;
 use basic::Arch;
 use std::any::Any;
 use std::sync::Arc;
-use postgres::types::ToSql;
 use holmes::pg::RowIter;
 use holmes::pg::dyn::{Type, Value};
 use holmes::pg::dyn::values::ToValue;
 use num::traits::FromPrimitive;
+use std::error::Error;
+use postgres::types::{ToSql, IsNull, SessionInfo};
+use rustc_serialize::json::{Decoder, Json};
+use rustc_serialize::json;
+use rustc_serialize::Decodable;
 
 #[derive(Debug,Clone,Hash,PartialEq)]
 /// This type is used to give a `holmes` `Type` to `bap::bitvector::BitVector`
@@ -79,5 +84,51 @@ impl ValueT for Arch {
 impl ToValue for Arch {
     fn to_value(self) -> Value {
         Arc::new(self)
+    }
+}
+
+#[derive(Debug,Clone,Hash,PartialEq)]
+/// This represents the Holmes type for `Variable`
+pub struct VarType;
+impl TypeT for VarType {
+    fn name(&self) -> Option<&'static str> {
+        Some("var")
+    }
+    fn extract(&self, cols: &mut RowIter) -> Option<Value> {
+        cols.next().map(|raw: Json| {
+            let typed: Variable = {
+                let mut decoder = Decoder::new(raw);
+                Variable::decode(&mut decoder).unwrap()
+            };
+            Arc::new(typed) as Value
+        })
+    }
+    fn repr(&self) -> Vec<String> {
+        vec!["jsonb".to_string()]
+    }
+    typet_boiler!();
+}
+impl ValueT for Variable {
+    fn type_(&self) -> Type {
+        Arc::new(VarType)
+    }
+    fn get(&self) -> &Any {
+        self as &Any
+    }
+    fn to_sql(&self) -> Vec<&ToSql> {
+        vec![self]
+    }
+    valuet_boiler!();
+}
+impl ToSql for Variable {
+    accepts!(::postgres::types::Type::Jsonb,
+             ::postgres::types::Type::Json);
+    to_sql_checked!();
+    fn to_sql(&self,
+              ty: &::postgres::types::Type,
+              out: &mut Vec<u8>,
+              ctx: &SessionInfo)
+              -> Result<IsNull, Box<Error + Sync + Send>> {
+        Json::from_str(&json::encode(self).unwrap()).unwrap().to_sql(ty, out, ctx)
     }
 }
