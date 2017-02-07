@@ -14,7 +14,7 @@ before_script:
   - opam install ctypes ctypes-foreign -y
   - autoconf
   - ./configure --prefix $HOME/.local
-  - make
+  - travis_wait make
   - mkdir -p $HOME/.local/lib
   - mkdir -p $HOME/.local/include
   - make install
