@@ -62,10 +62,10 @@ rust:
   - stable
 
 script:
-  - travis-cargo build
-  - travis-cargo test
-  - travis-cargo bench
-  - travis-cargo --only stable doc
+  - travis-cargo build -- --all-features
+  - travis-cargo test -- --all-features
+  - travis-cargo bench -- --all-features
+  - travis-cargo --only stable doc -- --all-features
 
 after_success:
   - travis-cargo --only stable doc-upload
