@@ -682,6 +682,14 @@ impl<'a> Instruction<'a> {
             extra: PhantomData,
         }
     }
+    /// Get whether this is a return
+    pub fn is_return(&self) -> bool {
+        unsafe { bap_sys::bap_insn_is_return(self.bap_sys) }
+    }
+    /// Get whether this is a call
+    pub fn is_call(&self) -> bool {
+        unsafe { bap_sys::bap_insn_is_call(self.bap_sys) }
+    }
 }
 
 impl<'a> StatementSequence<'a> {
