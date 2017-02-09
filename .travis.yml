@@ -1,24 +1,17 @@
 language: rust
 cache:
-  directories:
-    - $HOME/.opam
-    - $HOME/.cache/pip
-before_cache:
-  - rm -rf $HOME/.opam/log
+  - pip
+  - cargo
 before_script:
   # Install libbap
-  - opam init -y
-  - eval `opam config env`
-  - travis_wait opam pin add bap git://github.com/BinaryAnalysisPlatform/bap#v1.1.0
-  - cd bap-bindings
-  - opam install ctypes ctypes-foreign -y
-  - autoconf
-  - ./configure --prefix $HOME/.local
-  - travis_wait make
+  - wget https://github.com/maurer/bap-rust/releases/download/v0.1-alpha/libbap_1.1.0.tar.xz
+  - tar xf libbap_1.1.0.tar.xz
+  - mkdir -p $HOME/.local/bap
   - mkdir -p $HOME/.local/lib
   - mkdir -p $HOME/.local/include
-  - make install
-  - cd ..
+  - cp -r bap/plugins $HOME/.local/bap
+  - cp -r bap/libbap* $HOME/.local/lib/libbap.so
+  - cp -r bap/bap.h $HOME/.local/include
   # Fetch travis-cargo
   - |
       pip install 'travis-cargo<0.2' --user &&
@@ -29,12 +22,9 @@ addons:
   postgresql: 9.5
   apt:
     sources:
-    - avsm
     - ubuntu-toolchain-r-test
     - llvm-toolchain-precise-3.9
     packages:
-    - camlp4
-    - camlp4-extra
     - clang-3.9
     - libclang-3.9-dev
     - curl
@@ -43,18 +33,8 @@ addons:
     - libssl-dev
     - libzip-dev
     - llvm-3.9-dev
-    - llvm-3.4-dev
     - m4
-    - ocaml
-    - ocaml-base
-    - ocaml-base-nox
-    - ocaml-compiler-libs
-    - ocaml-native-compilers
-    - ocaml-nox
     - time
-    - opam
-    - aspcud
-    - dejagnu
 
 rust:
   - nightly
@@ -74,6 +54,7 @@ env:
   global:
     - TRAVIS_CARGO_NIGHTLY_FEATURE=""
     - BAP_LIB_DIR=$HOME/.local/lib
+    - BAP_PLUGIN_PATH=$HOME/.local/bap/plugins
     - BAP_INCLUDE_DIR=$HOME/.local/include
     - C_INCLUDE_PATH=$HOME/.local/include
     - LIBCLANG_PATH=/usr/lib/clang/3.9/lib/linux/
