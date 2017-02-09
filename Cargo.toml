@@ -20,10 +20,10 @@ lazy_static = "0.2"
 enum_primitive = "0.1"
 num = "0.1"
 
-postgres = {version = "0.13", optional = true, features = ["with-bit-vec"]}
+postgres = {version = "0.13", optional = true, features = ["with-bit-vec", "with-rustc-serialize"]}
 
 [dependencies.holmes]
-version = "0.1"
+git = "https://github.com/maurer/holmes"
 optional = true
 
 [dependencies.rustc-serialize]

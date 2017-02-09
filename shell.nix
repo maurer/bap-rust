@@ -28,7 +28,8 @@ let vim = vim_configurable.customize {
 
 with rust;
 stdenv.mkDerivation rec {
-  name = "holmes";
+  name = "bap";
   buildInputs = [ cargo rustc libbap vim clang llvm ];
+  LIBCLANG_PATH = "${clang.cc}/lib/";
 }
 ) {rust = nixpkgs.rustNightly; }
