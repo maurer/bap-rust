@@ -4,7 +4,7 @@ cache:
   - cargo
 before_script:
   # Install libbap
-  - export BAP_VERSION=1.1.0
+  - export BAP_VERSION=1.2.0
   - wget https://github.com/BinaryAnalysisPlatform/bap/releases/download/v$BAP_VERSION/bap-$BAP_VERSION.tgz
   - wget https://github.com/BinaryAnalysisPlatform/bap/releases/download/v$BAP_VERSION/libbap-$BAP_VERSION.tgz
   - wget https://github.com/BinaryAnalysisPlatform/bap/releases/download/v$BAP_VERSION/libbap-dev-$BAP_VERSION.tgz
