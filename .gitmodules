@@ -1,3 +1,0 @@
-[submodule "bap-bindings"]
-	path = bap-bindings
-	url = https://github.com/BinaryAnalysisPlatform/bap-bindings

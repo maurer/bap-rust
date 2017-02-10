@@ -4,14 +4,19 @@ cache:
   - cargo
 before_script:
   # Install libbap
-  - wget https://github.com/maurer/bap-rust/releases/download/v0.1-alpha/libbap_1.1.0.tar.xz
-  - tar xf libbap_1.1.0.tar.xz
+  - export BAP_VERSION=1.1.0
+  - wget https://github.com/BinaryAnalysisPlatform/bap/releases/download/v$BAP_VERSION/bap-$BAP_VERSION.tgz
+  - wget https://github.com/BinaryAnalysisPlatform/bap/releases/download/v$BAP_VERSION/libbap-$BAP_VERSION.tgz
+  - wget https://github.com/BinaryAnalysisPlatform/bap/releases/download/v$BAP_VERSION/libbap-dev-$BAP_VERSION.tgz
+  - tar xf bap-$BAP_VERSION.tgz
+  - tar xf libbap-$BAP_VERSION.tgz
+  - tar xf libbap-dev-$BAP_VERSION.tgz
   - mkdir -p $HOME/.local/bap
   - mkdir -p $HOME/.local/lib
   - mkdir -p $HOME/.local/include
-  - cp -r bap/plugins $HOME/.local/bap
-  - cp -r bap/libbap* $HOME/.local/lib/libbap.so
-  - cp -r bap/bap.h $HOME/.local/include
+  - cp -r usr/local/lib/bap/ $HOME/.local/bap/plugins
+  - cp -r usr/local/lib/libbap.so.* $HOME/.local/lib/libbap.so
+  - cp -r usr/local/include/bap.h $HOME/.local/include
   # Fetch travis-cargo
   - |
       pip install 'travis-cargo<0.2' --user &&
