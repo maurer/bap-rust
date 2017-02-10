@@ -61,6 +61,7 @@ env:
     - BAP_LIB_DIR=$HOME/.local/lib
     - BAP_PLUGIN_PATH=$HOME/.local/bap/plugins
     - BAP_INCLUDE_DIR=$HOME/.local/include
+    - LD_LIBRARY_PATH=$HOME/.local/lib
     - C_INCLUDE_PATH=$HOME/.local/include
     - LIBCLANG_PATH=/usr/lib/clang/3.9/lib/linux/
     - LLVM_CONFIG_PATH=/usr/bin/llvm-config-3.9
