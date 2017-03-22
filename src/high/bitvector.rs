@@ -13,8 +13,8 @@ use basic;
 /// may be odd things like 31 bits, or things larger than traditional integer types like 128 bits.
 #[derive(Clone, Hash, PartialEq, PartialOrd)]
 pub struct BitVector {
-    native: BitVec,
     unum: BigUint,
+    native: BitVec,
 }
 
 #[cfg(feature = "json")]
@@ -102,6 +102,12 @@ impl BitVector {
     pub fn unum(&self) -> BigUint {
         self.unum.clone()
     }
+    /// Create a `BitVector` from a `u64` value and the target length.
+    /// Length must be long enough to contain the `u64` value.
+    pub fn from_u64(val: u64, len: usize) -> Self {
+        let unum = BigUint::from_u64(val).unwrap();
+        Self::new_unsigned(unum, len)
+    }
 }
 
 // Compute the twos-complement overflowed version of thie `BigUint`
@@ -147,4 +153,11 @@ impl ::num::traits::ToPrimitive for BitVector {
     fn to_u64(&self) -> Option<u64> {
         self.unum.to_u64()
     }
+}
+
+#[test]
+fn bv_gt() {
+    let bv_lo = BitVector::from_u64(0x123456789, 64);
+    let bv_hi = BitVector::from_u64(0x987654321, 64);
+    assert!(bv_hi > bv_lo);
 }
