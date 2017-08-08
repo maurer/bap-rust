@@ -17,7 +17,7 @@ use rustc_serialize::json::{Decoder, Json};
 use rustc_serialize::json;
 use rustc_serialize::Decodable;
 
-#[derive(Debug,Clone,Hash,PartialEq)]
+#[derive(Debug, Clone, Hash, PartialEq)]
 /// This type is used to give a `holmes` `Type` to `bap::bitvector::BitVector`
 pub struct BitVectorType;
 impl TypeT for BitVectorType {
@@ -25,7 +25,9 @@ impl TypeT for BitVectorType {
         Some("bitvector")
     }
     fn extract(&self, cols: &mut RowIter) -> Option<Value> {
-        cols.next().map(|col| Arc::new(BitVector::new(&col)) as Value)
+        cols.next().map(
+            |col| Arc::new(BitVector::new(&col)) as Value,
+        )
     }
     fn repr(&self) -> Vec<String> {
         vec!["bit varying".to_string()]
@@ -52,7 +54,7 @@ impl ToValue for BitVector {
     }
 }
 
-#[derive(Debug,Clone,Hash,PartialEq)]
+#[derive(Debug, Clone, Hash, PartialEq)]
 /// This type is used to give a `holmes` `Type` to `bap::basic::Arch`
 pub struct ArchType;
 impl TypeT for ArchType {
@@ -60,7 +62,9 @@ impl TypeT for ArchType {
         Some("arch")
     }
     fn extract(&self, cols: &mut RowIter) -> Option<Value> {
-        cols.next().and_then(|col| Arch::from_i16(col).map(|arch| Arc::new(arch) as Value))
+        cols.next().and_then(|col| {
+            Arch::from_i16(col).map(|arch| Arc::new(arch) as Value)
+        })
     }
     fn repr(&self) -> Vec<String> {
         vec!["SMALLINT".to_string()]
@@ -87,7 +91,7 @@ impl ToValue for Arch {
     }
 }
 
-#[derive(Debug,Clone,Hash,PartialEq)]
+#[derive(Debug, Clone, Hash, PartialEq)]
 /// This represents the Holmes type for `Variable`
 pub struct VarType;
 impl TypeT for VarType {
@@ -121,14 +125,19 @@ impl ValueT for Variable {
     valuet_boiler!();
 }
 impl ToSql for Variable {
-    accepts!(::postgres::types::Type::Jsonb,
-             ::postgres::types::Type::Json);
+    accepts!(
+        ::postgres::types::Type::Jsonb,
+        ::postgres::types::Type::Json
+    );
     to_sql_checked!();
-    fn to_sql(&self,
-              ty: &::postgres::types::Type,
-              out: &mut Vec<u8>,
-              ctx: &SessionInfo)
-              -> Result<IsNull, Box<Error + Sync + Send>> {
-        Json::from_str(&json::encode(self).unwrap()).unwrap().to_sql(ty, out, ctx)
+    fn to_sql(
+        &self,
+        ty: &::postgres::types::Type,
+        out: &mut Vec<u8>,
+        ctx: &SessionInfo,
+    ) -> Result<IsNull, Box<Error + Sync + Send>> {
+        Json::from_str(&json::encode(self).unwrap())
+            .unwrap()
+            .to_sql(ty, out, ctx)
     }
 }

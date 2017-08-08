@@ -27,8 +27,10 @@ pub type BitSize = u16;
 
 // Bail out with the most recent error (for cases we can't report cleanly, like init)
 unsafe fn bap_panic() {
-    panic!("bap unrecoverable error: {}",
-           CStr::from_ptr(bap_sys::bap_error_get()).to_string_lossy())
+    panic!(
+        "bap unrecoverable error: {}",
+        CStr::from_ptr(bap_sys::bap_error_get()).to_string_lossy()
+    )
 }
 
 /// Type alias for `Result` with a BAP error
@@ -58,7 +60,11 @@ impl CastFrom<int> for BitSize {
 // Wraps a potentially errored BAP value into a `Result` type
 unsafe fn bap_error<T>(v: *mut T) -> Result<*mut T> {
     if v == null_mut() {
-        let out = Err(CStr::from_ptr(bap_sys::bap_error_get()).to_string_lossy().into_owned());
+        let out = Err(
+            CStr::from_ptr(bap_sys::bap_error_get())
+                .to_string_lossy()
+                .into_owned(),
+        );
         bap_sys::bap_error_clean();
         out
     } else {
@@ -103,12 +109,10 @@ impl Bap {
     /// Performs initialization if not done, and returns a `Bap` context object if
     /// you are on the query thread.
     pub fn get() -> Bap {
-        BAP_INIT.call_once(|| {
-            unsafe {
-                bap_sys::bap_init(1, ["bap".as_ptr() as *const char, null()].as_mut_ptr());
-                if bap_sys::bap_load_plugins() < 0 {
-                    bap_panic()
-                }
+        BAP_INIT.call_once(|| unsafe {
+            bap_sys::bap_init(1, ["bap".as_ptr() as *const char, null()].as_mut_ptr());
+            if bap_sys::bap_load_plugins() < 0 {
+                bap_panic()
             }
         });
         Bap {
@@ -118,7 +122,8 @@ impl Bap {
     }
     /// With-style wrapper around a `Bap` context object
     pub fn with<F, A>(f: F) -> A
-        where F: Fn(&Bap) -> A
+    where
+        F: Fn(&Bap) -> A,
     {
         f(&Bap::get())
     }
@@ -249,15 +254,19 @@ abs_type!(bap_word_t, Word, PU);
 /// BAP type representing a sequence of segments
 abs_type!(bap_segment_seq_t, SegmentSequence, Image);
 /// BAP type representing an iterator of a segment sequence
-abs_type!(bap_segment_seq_iterator_t,
-          SegmentSequenceIterator,
-          SegmentSequence);
+abs_type!(
+    bap_segment_seq_iterator_t,
+    SegmentSequenceIterator,
+    SegmentSequence
+);
 /// BAP type representing a sequence of symbols
 abs_type!(bap_symbol_seq_t, SymbolSequence, Image);
 /// BAP type representing an iterator of a segment sequence
-abs_type!(bap_symbol_seq_iterator_t,
-          SymbolSequenceIterator,
-          SymbolSequence);
+abs_type!(
+    bap_symbol_seq_iterator_t,
+    SymbolSequenceIterator,
+    SymbolSequence
+);
 /// BAP type representing a segment
 abs_type!(bap_segment_t, Segment, Image);
 /// BAP type representing a symbol
@@ -271,9 +280,11 @@ abs_type!(bap_insn_t, Instruction);
 /// BAP type repsenting a sequence of statements
 abs_type!(bap_stmt_seq_t, StatementSequence);
 /// BAP type representing an iterator of a segment sequence
-abs_type!(bap_stmt_seq_iterator_t,
-          StatementSequenceIterator,
-          StatementSequence);
+abs_type!(
+    bap_stmt_seq_iterator_t,
+    StatementSequenceIterator,
+    StatementSequence
+);
 /// BAP type repsenting BIL semantic statement
 abs_type!(bap_stmt_t, Statement);
 /// BAP type representing a BIL expression
@@ -289,8 +300,10 @@ impl<'a> Image<'a> {
         unsafe {
             let path_c = CString::new(path).unwrap();
             Ok(Image {
-                bap_sys: bap_error(bap_sys::bap_image_create(path_c.as_ptr() as *mut char,
-                                                             null_mut()))?,
+                bap_sys: bap_error(bap_sys::bap_image_create(
+                    path_c.as_ptr() as *mut char,
+                    null_mut(),
+                ))?,
                 rc: rc1(),
                 extra: ImageBacking { _backing: None },
             })
@@ -301,9 +314,11 @@ impl<'a> Image<'a> {
     pub fn from_data(_bap: &'a Bap, data: &'a [u8]) -> Result<Self> {
         unsafe {
             Ok(Image {
-                bap_sys: bap_error(bap_sys::bap_image_of_data(data.as_ptr() as *mut char,
-                                                              data.len() as size_t,
-                                                              null_mut()))?,
+                bap_sys: bap_error(bap_sys::bap_image_of_data(
+                    data.as_ptr() as *mut char,
+                    data.len() as size_t,
+                    null_mut(),
+                ))?,
                 rc: rc1(),
                 extra: ImageBacking { _backing: Some(data) },
             })
@@ -373,32 +388,34 @@ fn load_test() {
     let mut data = Vec::new();
     File::open(path).unwrap().read_to_end(&mut data).unwrap();
     (|| -> Result<()> {
-            let image = Image::from_file(&bap, path)?;
-            assert_eq!(path, &image.filename());
-            let image2 = Image::from_data(&bap, &data)?;
-            assert_eq!(data, image.data());
-            assert_eq!(data, image2.data());
-            Ok(())
-        })()
-        .unwrap()
+         let image = Image::from_file(&bap, path)?;
+         assert_eq!(path, &image.filename());
+         let image2 = Image::from_data(&bap, &data)?;
+         assert_eq!(data, image.data());
+         assert_eq!(data, image2.data());
+         Ok(())
+     })().unwrap()
 }
 
 #[test]
 fn sym_test() {
     let path = "test_data/elf_x86";
     Bap::with(|bap| -> Result<()> {
-            let image = Image::from_file(&bap, path)?;
-            let syms = image.symbols();
-            let sym_names: Vec<String> = syms.iter().map(|sym| sym.name()).collect();
-            let expected_names: Vec<String> =
-                ["__x86.get_pc_thunk.bx", "f", "main", "__libc_csu_init", "__libc_csu_fini"]
-                    .iter()
-                    .map(|x| x.to_string())
-                    .collect();
-            assert_eq!(sym_names, expected_names);
-            Ok(())
-        })
-        .unwrap()
+        let image = Image::from_file(&bap, path)?;
+        let syms = image.symbols();
+        let sym_names: Vec<String> = syms.iter().map(|sym| sym.name()).collect();
+        let expected_names: Vec<String> = [
+            "__x86.get_pc_thunk.bx",
+            "f",
+            "main",
+            "__libc_csu_init",
+            "__libc_csu_fini",
+        ].iter()
+            .map(|x| x.to_string())
+            .collect();
+        assert_eq!(sym_names, expected_names);
+        Ok(())
+    }).unwrap()
 }
 
 impl<'a> SegmentSequence<'a> {
@@ -508,8 +525,10 @@ impl<'a> Symbol<'a> {
     pub fn memory(&self) -> Memory<'a> {
         unsafe {
             Memory {
-                bap_sys: bap_sys::bap_image_memory_of_contiguous_symbol(self.extra.bap_sys,
-                                                                        self.bap_sys),
+                bap_sys: bap_sys::bap_image_memory_of_contiguous_symbol(
+                    self.extra.bap_sys,
+                    self.bap_sys,
+                ),
                 rc: rc1(),
                 extra: PhantomData,
             }
@@ -541,10 +560,12 @@ impl<'a> Word<'a> {
         let byte_len = bit_len * 8;
         buf.resize(byte_len, 0);
         unsafe {
-            bap_sys::bap_word_copy_bytes(self.bap_sys,
-                                         bap_sys::bap_endian_t::BAP_ENDIAN_LITTLE,
-                                         buf.as_mut_ptr() as *mut i8,
-                                         buf.len() as size_t);
+            bap_sys::bap_word_copy_bytes(
+                self.bap_sys,
+                bap_sys::bap_endian_t::BAP_ENDIAN_LITTLE,
+                buf.as_mut_ptr() as *mut i8,
+                buf.len() as size_t,
+            );
         }
         buf
     }
@@ -552,9 +573,11 @@ impl<'a> Word<'a> {
     pub fn from_bitvec(_bap: &'a Bap, bits: &BitVec) -> Self {
         Word {
             bap_sys: unsafe {
-                bap_sys::bap_word_of_binary(bits.len() as size_t,
-                                            bap_sys::bap_endian_t::BAP_ENDIAN_LITTLE,
-                                            bits.to_bytes().as_mut_ptr() as *mut i8)
+                bap_sys::bap_word_of_binary(
+                    bits.len() as size_t,
+                    bap_sys::bap_endian_t::BAP_ENDIAN_LITTLE,
+                    bits.to_bytes().as_mut_ptr() as *mut i8,
+                )
             },
             rc: rc1(),
             extra: PhantomData,
@@ -616,10 +639,12 @@ impl<'a> BasicDisasm<'a> {
     pub fn disasm(&self, data: &[u8], addr: u64) -> Result<Code> {
         Ok(Code {
             bap_sys: unsafe {
-                bap_error(bap_sys::bap_disasm_basic_next(self.bap_sys,
-                                                         data.as_ptr() as *mut i8,
-                                                         data.len() as size_t,
-                                                         addr as i64))?
+                bap_error(bap_sys::bap_disasm_basic_next(
+                    self.bap_sys,
+                    data.as_ptr() as *mut i8,
+                    data.len() as size_t,
+                    addr as i64,
+                ))?
             },
             rc: rc1(),
             extra: PhantomData,
@@ -842,7 +867,7 @@ impl<'a> Statement<'a> {
 
 /// Tag indicating which variety of expression something is
 #[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
+#[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum ExpressionTag {
     /// Unary operation
     /// unop(exp)
@@ -896,7 +921,7 @@ impl ExpressionTag {
 
 /// Unary Operations
 #[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
+#[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum UnOp {
     /// Bitwise not
     Not,
@@ -918,7 +943,7 @@ impl UnOp {
 
 /// Binary Operations
 #[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
+#[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum BinOp {
     /// Signed less than or equal
     SignedLessEqual,
@@ -991,7 +1016,7 @@ impl BinOp {
 
 /// BIL Cast kinds
 #[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
+#[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum Cast {
     /// Cast prefers low bits
     Low,
@@ -1019,7 +1044,7 @@ impl Cast {
 
 /// Byte order
 #[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
+#[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum Endian {
     /// Least significant first
     Little,

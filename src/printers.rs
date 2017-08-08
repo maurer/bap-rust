@@ -27,7 +27,10 @@ impl Display for Type {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match *self {
             Type::Immediate(n) => write!(f, "bv{}", n),
-            Type::Memory { addr_size, cell_size } => write!(f, "mem[{}:{}]", addr_size, cell_size),
+            Type::Memory {
+                addr_size,
+                cell_size,
+            } => write!(f, "mem[{}:{}]", addr_size, cell_size),
         }
     }
 }

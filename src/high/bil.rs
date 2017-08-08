@@ -46,7 +46,11 @@ pub enum Statement {
 }
 
 fn stmts(stmts: Option<basic::StatementSequence>) -> Vec<Statement> {
-    stmts.unwrap().iter().map(|s| Statement::from_basic(&s)).collect()
+    stmts
+        .unwrap()
+        .iter()
+        .map(|s| Statement::from_basic(&s))
+        .collect()
 }
 
 impl Statement {
@@ -270,7 +274,7 @@ impl Expression {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
+#[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 /// Native representation of a variable
 pub struct Variable {
     /// Variable name
@@ -299,7 +303,7 @@ impl Variable {
 }
 
 #[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
+#[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 /// Native representation of BAP types, which just describe the raw shape of the data rather than
 /// properties about it.
 pub enum Type {

@@ -43,10 +43,12 @@ impl Decodable for BitVector {
 
 impl ::std::fmt::Debug for BitVector {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f,
-               "BitVector {{ native: {:?}, unum: {:?} }}",
-               self.native,
-               self.unum)
+        write!(
+            f,
+            "BitVector {{ native: {:?}, unum: {:?} }}",
+            self.native,
+            self.unum
+        )
     }
 }
 
@@ -124,17 +126,23 @@ impl<'a> ::std::ops::Add for &'a BitVector {
     type Output = BitVector;
     fn add(self, rhs: &'a BitVector) -> BitVector {
         assert_eq!(self.native.len(), rhs.native.len());
-        BitVector::new_unsigned(overflow(&self.unum + &rhs.unum, self.native.len()),
-                                self.native.len())
+        BitVector::new_unsigned(
+            overflow(&self.unum + &rhs.unum, self.native.len()),
+            self.native.len(),
+        )
     }
 }
 
 impl<'a> ::std::ops::Add<usize> for &'a BitVector {
     type Output = BitVector;
     fn add(self, rhs: usize) -> BitVector {
-        BitVector::new_unsigned(overflow(&self.unum + BigUint::from_usize(rhs).unwrap(),
-                                         self.native.len()),
-                                self.native.len())
+        BitVector::new_unsigned(
+            overflow(
+                &self.unum + BigUint::from_usize(rhs).unwrap(),
+                self.native.len(),
+            ),
+            self.native.len(),
+        )
     }
 }
 
