@@ -1,10 +1,10 @@
 { nixpkgs ? import <nixpkgs> {}}:
 nixpkgs.callPackage (
-{ stdenv, rust, libbap, vim_configurable, clang, llvm }:
+{ stdenv, rust, libbap, llvmPackages, vim_configurable }:
 
 # Vim with rust + git support
 let vim = vim_configurable.customize {
-  name = "vim-bap";
+  name = "vim";
   vimrcConfig.customRC = ''
     set backspace=indent,eol,start
 
@@ -26,10 +26,9 @@ let vim = vim_configurable.customize {
   ];}];
 }; in
 
-with rust;
 stdenv.mkDerivation rec {
-  name = "bap";
-  buildInputs = [ cargo rustc libbap vim clang llvm ];
-  LIBCLANG_PATH = "${clang.cc}/lib/";
+  name = "bap-rust";
+  buildInputs = [ rust libbap vim ];
+  LIBCLANG_PATH = "${llvmPackages.clang-unwrapped}/lib";
 }
-) {rust = nixpkgs.rustNightly; }
+) {rust = nixpkgs.rustChannels.nightly.rust; }

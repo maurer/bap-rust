@@ -8,15 +8,6 @@ pub use basic::BitSize;
 pub use super::bitvector::BitVector;
 use basic;
 
-macro_rules! opt {
-    ($e:expr) => {
-        match $e {
-            Some(i) => i,
-            None => return None
-        }
-    };
-}
-
 /// Native representation of a BIL statement
 #[derive(Debug, Clone, Hash, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
