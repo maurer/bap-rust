@@ -9,7 +9,7 @@ repository = "https://github.com/maurer/bap-rust"
 
 [features]
 default = []
-holmes_support = ["holmes", "postgres"]
+holmes_support = ["holmes", "postgres", "json"]
 json = ["rustc-serialize"]
 
 [dependencies]
@@ -20,7 +20,7 @@ lazy_static = "0.2"
 enum_primitive = "0.1"
 num = "0.1"
 
-postgres = {version = "0.13", optional = true, features = ["with-bit-vec", "with-rustc-serialize"]}
+postgres = {version = "0.15", optional = true, features = ["with-bit-vec", "with-rustc-serialize"]}
 
 [dependencies.holmes]
 git = "https://github.com/maurer/holmes"

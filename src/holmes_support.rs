@@ -12,7 +12,7 @@ use holmes::pg::dyn::{Type, Value};
 use holmes::pg::dyn::values::ToValue;
 use num::traits::FromPrimitive;
 use std::error::Error;
-use postgres::types::{ToSql, IsNull, SessionInfo};
+use postgres::types::{ToSql, IsNull};
 use rustc_serialize::json::{Decoder, Json};
 use rustc_serialize::json;
 use rustc_serialize::Decodable;
@@ -125,19 +125,15 @@ impl ValueT for Variable {
     valuet_boiler!();
 }
 impl ToSql for Variable {
-    accepts!(
-        ::postgres::types::Type::Jsonb,
-        ::postgres::types::Type::Json
-    );
+    accepts!(::postgres::types::JSONB, ::postgres::types::JSON);
     to_sql_checked!();
     fn to_sql(
         &self,
         ty: &::postgres::types::Type,
         out: &mut Vec<u8>,
-        ctx: &SessionInfo,
     ) -> Result<IsNull, Box<Error + Sync + Send>> {
         Json::from_str(&json::encode(self).unwrap())
             .unwrap()
-            .to_sql(ty, out, ctx)
+            .to_sql(ty, out)
     }
 }
