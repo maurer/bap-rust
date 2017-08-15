@@ -1299,6 +1299,7 @@ impl<'a> Memory<'a> {
     }
 }
 
+/// Generates from an executable file a list of suspected function entry points for the file.
 pub fn roots<'a>(data: &[u8]) -> Vec<Word<'a>> {
     unsafe {
         // This is actually very bad - currently, the C-bindings force me to construct an

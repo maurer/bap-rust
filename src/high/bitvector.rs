@@ -82,6 +82,7 @@ impl BitVector {
         }
         BitVector::new(&bv)
     }
+    /// Produces the empty bitvector
     pub fn nil() -> Self {
         BitVector::new(&BitVec::new())
     }
