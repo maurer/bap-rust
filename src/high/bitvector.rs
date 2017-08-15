@@ -82,6 +82,9 @@ impl BitVector {
         }
         BitVector::new(&bv)
     }
+    pub fn nil() -> Self {
+        BitVector::new(&BitVec::new())
+    }
     /// Convert the `BitVector` into a `BitVec`, consuming it
     pub fn into_bitvec(self) -> BitVec {
         self.native
