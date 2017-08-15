@@ -19,6 +19,7 @@ byteorder = "0.4"
 lazy_static = "0.2"
 enum_primitive = "0.1"
 num = "0.1"
+mktemp = "0.3"
 
 postgres = {version = "0.15", optional = true, features = ["with-bit-vec", "with-rustc-serialize"]}
 

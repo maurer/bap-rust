@@ -1298,3 +1298,51 @@ impl<'a> Memory<'a> {
         }
     }
 }
+
+pub fn roots<'a>(data: &[u8]) -> Vec<Word<'a>> {
+    unsafe {
+        // This is actually very bad - currently, the C-bindings force me to construct an
+        // entire project to access a rooter. However, project construction risks overhead from
+        // random analyses, so this can't be allowed to stay.
+        let rooter_source = bap_sys::bap_rooter_factory_find("byteweight".as_ptr() as *mut i8);
+        let mut proj_args = bap_sys::bap_project_parameters_t {
+            rooter: rooter_source,
+            reconstructor: null_mut(),
+            brancher: null_mut(),
+            symbolizer: null_mut(),
+            // Spelling error, but it also occurs in bap_bindings, so we just have to deal with
+            // it
+            disassember: null_mut(),
+        };
+        // Evidently bap projects refuse to load from anywhere other than disk. FML
+        let bap_temp = ::mktemp::Temp::new_file().unwrap();
+        {
+            use std::io::Write;
+            let mut bap_fd = ::std::fs::File::create(&bap_temp).unwrap();
+            bap_fd.write(data).unwrap();
+        }
+        let bap_path_buf = bap_temp.to_path_buf();
+        //NORELEASE leaks memory
+        let proj_input = bap_sys::bap_project_input_file(bap_path_buf.to_str().unwrap().as_ptr() as
+                                                         *mut i8,
+                                                         null_mut());
+        let proj = bap_error(bap_sys::bap_project_create(proj_input,
+                                                         (&mut proj_args) as
+                                                         *mut bap_sys::bap_project_parameters_t))
+                .unwrap();
+        let symtab = bap_sys::bap_project_symbols(proj);
+        let seq = bap_sys::bap_symbtab_enum(symtab);
+        let seq_iter = bap_sys::bap_symbtab_fn_seq_iterator_create(seq);
+        let mut out = Vec::new();
+        while bap_sys::bap_symbtab_fn_seq_iterator_has_next(seq_iter) {
+            out.push(Word {
+                    bap_sys: bap_sys::bap_block_addr(bap_sys::bap_symtab_fn_entry(bap_sys::bap_symbtab_fn_seq_iterator_next(seq_iter))),
+            rc: rc1(),
+            extra: PhantomData,
+        })
+
+
+        }
+        out
+    }
+}

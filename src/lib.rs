@@ -15,6 +15,7 @@
 extern crate bap_sys;
 extern crate bit_vec;
 extern crate byteorder;
+extern crate mktemp;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
