@@ -11,7 +11,7 @@ use basic;
 /// A `BitVector` is a wrapper around a `BitVec` allowing it to do perform arbitrary-but-fixed
 /// width two's complement arithmetic. This is useful when talking about CPU-level values, which
 /// may be odd things like 31 bits, or things larger than traditional integer types like 128 bits.
-#[derive(Clone, Hash, PartialEq, PartialOrd)]
+#[derive(Clone, Hash, PartialEq, PartialOrd, Eq)]
 pub struct BitVector {
     unum: BigUint,
     native: BitVec,
