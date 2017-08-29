@@ -920,7 +920,7 @@ impl ExpressionTag {
 }
 
 /// Unary Operations
-#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd, Eq)]
 #[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum UnOp {
     /// Bitwise not
@@ -942,7 +942,7 @@ impl UnOp {
 }
 
 /// Binary Operations
-#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd, Eq)]
 #[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum BinOp {
     /// Signed less than or equal
@@ -1015,7 +1015,7 @@ impl BinOp {
 }
 
 /// BIL Cast kinds
-#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd, Eq)]
 #[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum Cast {
     /// Cast prefers low bits
@@ -1043,7 +1043,7 @@ impl Cast {
 }
 
 /// Byte order
-#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd, Eq)]
 #[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum Endian {
     /// Least significant first

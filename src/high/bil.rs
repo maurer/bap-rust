@@ -9,7 +9,7 @@ pub use super::bitvector::BitVector;
 use basic;
 
 /// Native representation of a BIL statement
-#[derive(Debug, Clone, Hash, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq)]
 #[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum Statement {
     /// Transfers control to the address its argument resolves to
@@ -86,7 +86,7 @@ impl Statement {
 }
 
 /// Native representation of a BIL expression
-#[derive(Debug, Clone, Hash, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq)]
 #[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum Expression {
     /// Takes the value of the argument variable
@@ -273,7 +273,7 @@ impl Expression {
     }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Hash, PartialEq, PartialOrd, Eq)]
 #[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 /// Native representation of a variable
 pub struct Variable {
@@ -302,7 +302,7 @@ impl Variable {
     }
 }
 
-#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd, Eq)]
 #[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 /// Native representation of BAP types, which just describe the raw shape of the data rather than
 /// properties about it.
