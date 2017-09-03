@@ -35,7 +35,6 @@ fn main() {
     bindgen::builder()
         .header("bap-sys.h")
         .link("bap")
-        .no_unstable_rust()
         .generate()
         .expect("Unable to generate bindings")
         .write_to_file(out_path.join("bap.rs"))

@@ -11,6 +11,6 @@ build = "build.rs"
 
 [build-dependencies]
 pkg-config = "*"
-bindgen = "0.20"
+bindgen = "0.30"
 
 [lib]
