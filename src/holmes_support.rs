@@ -29,8 +29,8 @@ impl TypeT for BitVectorType {
             |col| Arc::new(BitVector::new(&col)) as Value,
         )
     }
-    fn repr(&self) -> Vec<String> {
-        vec!["bit varying".to_string()]
+    fn repr(&self) -> &'static str {
+        "bit varying"
     }
     typet_boiler!();
 }
@@ -66,8 +66,8 @@ impl TypeT for ArchType {
             Arch::from_i16(col).map(|arch| Arc::new(arch) as Value)
         })
     }
-    fn repr(&self) -> Vec<String> {
-        vec!["SMALLINT".to_string()]
+    fn repr(&self) -> &'static str {
+        "smallint"
     }
     typet_boiler!();
 }
@@ -107,8 +107,8 @@ impl TypeT for VarType {
             Arc::new(typed) as Value
         })
     }
-    fn repr(&self) -> Vec<String> {
-        vec!["jsonb".to_string()]
+    fn repr(&self) -> &'static str {
+        "jsonb"
     }
     typet_boiler!();
 }
