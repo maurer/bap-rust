@@ -715,6 +715,11 @@ impl<'a> Instruction<'a> {
     pub fn is_call(&self) -> bool {
         unsafe { bap_sys::bap_insn_is_call(self.bap_sys) }
     }
+    /// Returns true if this instruction can go somewhere other than its
+    /// fallthrough address
+    pub fn may_affect_control_flow(&self) -> bool {
+        unsafe { bap_sys::bap_insn_may_affect_control_flow(self.bap_sys) }
+    }
 }
 
 impl<'a> StatementSequence<'a> {
