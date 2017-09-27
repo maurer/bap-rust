@@ -72,7 +72,7 @@ impl BitVector {
     }
     /// Creates a new `BitVector` from the number it is to represent and its length in bits
     pub fn new_unsigned(num: BigUint, len: usize) -> Self {
-        assert!(num.bits() <= len);
+        //assert!(num.bits() <= len);
         let mut bv = BitVec::from_bytes(&num.to_bytes_le());
         let bvlen = bv.len();
         if len > bvlen {
@@ -129,10 +129,11 @@ fn overflow(unum: BigUint, len: usize) -> BigUint {
 impl<'a> ::std::ops::Add for &'a BitVector {
     type Output = BitVector;
     fn add(self, rhs: &'a BitVector) -> BitVector {
-        assert_eq!(self.native.len(), rhs.native.len());
+        //assert_eq!(self.native.len(), rhs.native.len());
+        let len = ::std::cmp::max(self.native.len(), rhs.native.len());
         BitVector::new_unsigned(
-            overflow(&self.unum + &rhs.unum, self.native.len()),
-            self.native.len(),
+            overflow(&self.unum + &rhs.unum, len),
+            len
         )
     }
 }
