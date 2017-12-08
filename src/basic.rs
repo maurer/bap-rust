@@ -133,7 +133,7 @@ enum_from_primitive!{
 /// Native enum for BAP architectures
 #[allow(missing_docs)]
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, PartialOrd)]
 #[cfg_attr(feature = "json", derive(RustcEncodable,RustcDecodable))]
 #[repr(i16)]
 pub enum Arch {
