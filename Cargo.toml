@@ -12,7 +12,7 @@ default = []
 json = ["rustc-serialize"]
 
 [dependencies]
-bap-sys = {path = "./bap-sys"}
+bap-sys = {path = "./bap-sys", version = "0.1"}
 bit-vec = "0.4"
 lazy_static = "0.2"
 enum_primitive = "0.1"

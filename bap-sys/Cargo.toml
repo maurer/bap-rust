@@ -1,7 +1,7 @@
 [package]
 
 name = "bap-sys"
-version = "0.0.1"
+version = "0.1.0"
 authors = [ "Matthew Maurer <maurer@matthewmaurer.org>" ]
 license = "MIT"
 description = "Rust bindings to BAP"
@@ -10,7 +10,7 @@ links = "bap"
 build = "build.rs"
 
 [build-dependencies]
-pkg-config = "*"
+pkg-config = "0.3"
 bindgen = "0.30"
 
 [lib]
