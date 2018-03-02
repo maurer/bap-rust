@@ -1,4 +1,8 @@
 # Bindings to BAP in Rust
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+[![docs](https://img.shields.io/badge/doc-master-green.svg)](http://maurer.github.com/bap-rust)
+[![Build Status](https://travis-ci.org/maurer/bap-rust.svg?branch=master)](https://travis-ci.org/maurer/bap-rust)
+
 ## Installation
 * Install `libbap` for your distribution (tested against 1.3 and 1.4)
 
