@@ -311,7 +311,7 @@ abs_type!(
     Instruction
 );
 abs_type!(
-    /// BAP type repsenting a sequence of statements
+    /// Safe wrapper around a sequence of statements
     bap_stmt_seq_t,
     StatementSequence
 );
@@ -322,7 +322,7 @@ abs_type!(
     StatementSequence
 );
 abs_type!(
-    /// BAP type repsenting BIL semantic statement
+    /// Safe wrapper around a BIL semantic statement
     bap_stmt_t,
     Statement
 );
