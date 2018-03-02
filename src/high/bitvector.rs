@@ -37,7 +37,7 @@ impl Decodable for BitVector {
             let len = try!(d.read_struct_field("len", 1, |d| usize::decode(d)));
             Ok((unum, len))
         }));
-        Ok(BitVector::new_unsigned(unum, len))
+        Ok(BitVector::new_unsigned(&unum, len))
     }
 }
 
