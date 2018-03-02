@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["basic","This module provides the basic interace to BAP It essentially re-exports all functions from `bap-bindings` with safety wrappers."],["high","The `high` module contains higher level, native abstractions for working with BAP. At the moment, this consists of `bitvector` for manipulating `basic::Word`, and `bil` for interacting with BIL code."]]});

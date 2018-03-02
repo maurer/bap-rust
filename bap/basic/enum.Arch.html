@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Arch` enum in crate `bap`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Arch">
+
+    <title>bap::basic::Arch - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc enum">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Enum Arch</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#variants">Variants</a><div class="sidebar-links"><a href="#variant.AArch64Be">AArch64Be</a><a href="#variant.ArmV7">ArmV7</a><a href="#variant.ArmV6">ArmV6</a><a href="#variant.ArmV5">ArmV5</a><a href="#variant.ArmV4">ArmV4</a><a href="#variant.NvPTX">NvPTX</a><a href="#variant.ThumbV7Eb">ThumbV7Eb</a><a href="#variant.ThumbV6Eb">ThumbV6Eb</a><a href="#variant.ThumbV5Eb">ThumbV5Eb</a><a href="#variant.ThumbV4Eb">ThumbV4Eb</a><a href="#variant.Hexagon">Hexagon</a><a href="#variant.PPC64Le">PPC64Le</a><a href="#variant.SparcV9">SparcV9</a><a href="#variant.SystemZ">SystemZ</a><a href="#variant.ThumbV7">ThumbV7</a><a href="#variant.ThumbV6">ThumbV6</a><a href="#variant.ThumbV5">ThumbV5</a><a href="#variant.ThumbV4">ThumbV4</a><a href="#variant.MIPS64El">MIPS64El</a><a href="#variant.SPARC">SPARC</a><a href="#variant.X86">X86</a><a href="#variant.PPC">PPC</a><a href="#variant.AArch64">AArch64</a><a href="#variant.ArmV7Eb">ArmV7Eb</a><a href="#variant.ArmV6Eb">ArmV6Eb</a><a href="#variant.ArmV5Eb">ArmV5Eb</a><a href="#variant.ArmV4Eb">ArmV4Eb</a><a href="#variant.X86_64">X86_64</a><a href="#variant.XCore">XCore</a><a href="#variant.NvPTX64">NvPTX64</a><a href="#variant.MIPSEl">MIPSEl</a><a href="#variant.MIPS64">MIPS64</a><a href="#variant.R600">R600</a><a href="#variant.MIPS">MIPS</a><a href="#variant.PPC64">PPC64</a></div><a class="sidebar-title" href="#implementations">Trait Implementations</a><div class="sidebar-links"><a href="#impl-Copy">Copy</a><a href="#impl-Clone">Clone</a><a href="#impl-Debug">Debug</a><a href="#impl-Hash">Hash</a><a href="#impl-PartialEq">PartialEq</a><a href="#impl-Eq">Eq</a><a href="#impl-PartialOrd">PartialOrd</a><a href="#impl-Encodable">Encodable</a><a href="#impl-Decodable">Decodable</a><a href="#impl-FromPrimitive">FromPrimitive</a><a href="#impl-Display">Display</a></div></div><p class='location'><a href='../index.html'>bap</a>::<wbr><a href='index.html'>basic</a></p><script>window.sidebarCurrent = {name: 'Arch', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Enum <a href='../index.html'>bap</a>::<wbr><a href='index.html'>basic</a>::<wbr><a class="enum" href=''>Arch</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span></span></h1>
+<pre class='rust enum'><div class="docblock attributes">#[repr(i16)]
+</div>pub enum Arch {
+    AArch64Be,
+    ArmV7,
+    ArmV6,
+    ArmV5,
+    ArmV4,
+    NvPTX,
+    ThumbV7Eb,
+    ThumbV6Eb,
+    ThumbV5Eb,
+    ThumbV4Eb,
+    Hexagon,
+    PPC64Le,
+    SparcV9,
+    SystemZ,
+    ThumbV7,
+    ThumbV6,
+    ThumbV5,
+    ThumbV4,
+    MIPS64El,
+    SPARC,
+    X86,
+    PPC,
+    AArch64,
+    ArmV7Eb,
+    ArmV6Eb,
+    ArmV5Eb,
+    ArmV4Eb,
+    X86_64,
+    XCore,
+    NvPTX64,
+    MIPSEl,
+    MIPS64,
+    R600,
+    MIPS,
+    PPC64,
+}</pre><div class='docblock'><p>Native enum for BAP architectures</p>
+</div><h2 id='variants' class='variants small-section-header'>
+                   Variants<a href='#variants' class='anchor'></a></h2>
+<span id="variant.AArch64Be" class="variant small-section-header"><a href="#variant.AArch64Be" class="anchor field"></a><span id='AArch64Be.v' class='invisible'><code>AArch64Be</code></span></span><span id="variant.ArmV7" class="variant small-section-header"><a href="#variant.ArmV7" class="anchor field"></a><span id='ArmV7.v' class='invisible'><code>ArmV7</code></span></span><span id="variant.ArmV6" class="variant small-section-header"><a href="#variant.ArmV6" class="anchor field"></a><span id='ArmV6.v' class='invisible'><code>ArmV6</code></span></span><span id="variant.ArmV5" class="variant small-section-header"><a href="#variant.ArmV5" class="anchor field"></a><span id='ArmV5.v' class='invisible'><code>ArmV5</code></span></span><span id="variant.ArmV4" class="variant small-section-header"><a href="#variant.ArmV4" class="anchor field"></a><span id='ArmV4.v' class='invisible'><code>ArmV4</code></span></span><span id="variant.NvPTX" class="variant small-section-header"><a href="#variant.NvPTX" class="anchor field"></a><span id='NvPTX.v' class='invisible'><code>NvPTX</code></span></span><span id="variant.ThumbV7Eb" class="variant small-section-header"><a href="#variant.ThumbV7Eb" class="anchor field"></a><span id='ThumbV7Eb.v' class='invisible'><code>ThumbV7Eb</code></span></span><span id="variant.ThumbV6Eb" class="variant small-section-header"><a href="#variant.ThumbV6Eb" class="anchor field"></a><span id='ThumbV6Eb.v' class='invisible'><code>ThumbV6Eb</code></span></span><span id="variant.ThumbV5Eb" class="variant small-section-header"><a href="#variant.ThumbV5Eb" class="anchor field"></a><span id='ThumbV5Eb.v' class='invisible'><code>ThumbV5Eb</code></span></span><span id="variant.ThumbV4Eb" class="variant small-section-header"><a href="#variant.ThumbV4Eb" class="anchor field"></a><span id='ThumbV4Eb.v' class='invisible'><code>ThumbV4Eb</code></span></span><span id="variant.Hexagon" class="variant small-section-header"><a href="#variant.Hexagon" class="anchor field"></a><span id='Hexagon.v' class='invisible'><code>Hexagon</code></span></span><span id="variant.PPC64Le" class="variant small-section-header"><a href="#variant.PPC64Le" class="anchor field"></a><span id='PPC64Le.v' class='invisible'><code>PPC64Le</code></span></span><span id="variant.SparcV9" class="variant small-section-header"><a href="#variant.SparcV9" class="anchor field"></a><span id='SparcV9.v' class='invisible'><code>SparcV9</code></span></span><span id="variant.SystemZ" class="variant small-section-header"><a href="#variant.SystemZ" class="anchor field"></a><span id='SystemZ.v' class='invisible'><code>SystemZ</code></span></span><span id="variant.ThumbV7" class="variant small-section-header"><a href="#variant.ThumbV7" class="anchor field"></a><span id='ThumbV7.v' class='invisible'><code>ThumbV7</code></span></span><span id="variant.ThumbV6" class="variant small-section-header"><a href="#variant.ThumbV6" class="anchor field"></a><span id='ThumbV6.v' class='invisible'><code>ThumbV6</code></span></span><span id="variant.ThumbV5" class="variant small-section-header"><a href="#variant.ThumbV5" class="anchor field"></a><span id='ThumbV5.v' class='invisible'><code>ThumbV5</code></span></span><span id="variant.ThumbV4" class="variant small-section-header"><a href="#variant.ThumbV4" class="anchor field"></a><span id='ThumbV4.v' class='invisible'><code>ThumbV4</code></span></span><span id="variant.MIPS64El" class="variant small-section-header"><a href="#variant.MIPS64El" class="anchor field"></a><span id='MIPS64El.v' class='invisible'><code>MIPS64El</code></span></span><span id="variant.SPARC" class="variant small-section-header"><a href="#variant.SPARC" class="anchor field"></a><span id='SPARC.v' class='invisible'><code>SPARC</code></span></span><span id="variant.X86" class="variant small-section-header"><a href="#variant.X86" class="anchor field"></a><span id='X86.v' class='invisible'><code>X86</code></span></span><span id="variant.PPC" class="variant small-section-header"><a href="#variant.PPC" class="anchor field"></a><span id='PPC.v' class='invisible'><code>PPC</code></span></span><span id="variant.AArch64" class="variant small-section-header"><a href="#variant.AArch64" class="anchor field"></a><span id='AArch64.v' class='invisible'><code>AArch64</code></span></span><span id="variant.ArmV7Eb" class="variant small-section-header"><a href="#variant.ArmV7Eb" class="anchor field"></a><span id='ArmV7Eb.v' class='invisible'><code>ArmV7Eb</code></span></span><span id="variant.ArmV6Eb" class="variant small-section-header"><a href="#variant.ArmV6Eb" class="anchor field"></a><span id='ArmV6Eb.v' class='invisible'><code>ArmV6Eb</code></span></span><span id="variant.ArmV5Eb" class="variant small-section-header"><a href="#variant.ArmV5Eb" class="anchor field"></a><span id='ArmV5Eb.v' class='invisible'><code>ArmV5Eb</code></span></span><span id="variant.ArmV4Eb" class="variant small-section-header"><a href="#variant.ArmV4Eb" class="anchor field"></a><span id='ArmV4Eb.v' class='invisible'><code>ArmV4Eb</code></span></span><span id="variant.X86_64" class="variant small-section-header"><a href="#variant.X86_64" class="anchor field"></a><span id='X86_64.v' class='invisible'><code>X86_64</code></span></span><span id="variant.XCore" class="variant small-section-header"><a href="#variant.XCore" class="anchor field"></a><span id='XCore.v' class='invisible'><code>XCore</code></span></span><span id="variant.NvPTX64" class="variant small-section-header"><a href="#variant.NvPTX64" class="anchor field"></a><span id='NvPTX64.v' class='invisible'><code>NvPTX64</code></span></span><span id="variant.MIPSEl" class="variant small-section-header"><a href="#variant.MIPSEl" class="anchor field"></a><span id='MIPSEl.v' class='invisible'><code>MIPSEl</code></span></span><span id="variant.MIPS64" class="variant small-section-header"><a href="#variant.MIPS64" class="anchor field"></a><span id='MIPS64.v' class='invisible'><code>MIPS64</code></span></span><span id="variant.R600" class="variant small-section-header"><a href="#variant.R600" class="anchor field"></a><span id='R600.v' class='invisible'><code>R600</code></span></span><span id="variant.MIPS" class="variant small-section-header"><a href="#variant.MIPS" class="anchor field"></a><span id='MIPS.v' class='invisible'><code>MIPS</code></span></span><span id="variant.PPC64" class="variant small-section-header"><a href="#variant.PPC64" class="anchor field"></a><span id='PPC64.v' class='invisible'><code>PPC64</code></span></span>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Copy' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html" title="trait core::marker::Copy">Copy</a> for <a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a></code><a href='#impl-Copy' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#138' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'></div><h3 id='impl-Clone' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html" title="trait core::clone::Clone">Clone</a> for <a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a></code><a href='#impl-Clone' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#138' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.clone' class="method"><span id='clone.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#138' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class="method"><span id='clone_from.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>Self)</code></span><span class='out-of-band'><div class='ghost'></div><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><a class='srclink' href='https://doc.rust-lang.org/nightly/src/core/clone.rs.html#112-114' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div><h3 id='impl-Debug' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> for <a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a></code><a href='#impl-Debug' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#138' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class="method"><span id='fmt.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#138' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter. <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt">Read more</a></p>
+</div></div><h3 id='impl-Hash' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html" title="trait core::hash::Hash">Hash</a> for <a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a></code><a href='#impl-Hash' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#138' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.hash' class="method"><span id='hash.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#tymethod.hash' class='fnname'>hash</a>&lt;__H:&nbsp;<a class="trait" href="https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html" title="trait core::hash::Hasher">Hasher</a>&gt;(&amp;self, __arg_0: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>__H)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#138' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Feeds this value into the given [<code>Hasher</code>]. <a href="https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#tymethod.hash">Read more</a></p>
+</div><h4 id='method.hash_slice' class="method"><span id='hash_slice.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#method.hash_slice' class='fnname'>hash_slice</a>&lt;H&gt;(data: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[Self]</a>, state: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>H) <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;H: <a class="trait" href="https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html" title="trait core::hash::Hasher">Hasher</a>,&nbsp;</span></code></span><span class='out-of-band'><div class='ghost'></div><div class='since' title='Stable since Rust version 1.3.0'>1.3.0</div><a class='srclink' href='https://doc.rust-lang.org/nightly/src/core/hash/mod.rs.html#202-208' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Feeds a slice of this type into the given [<code>Hasher</code>]. <a href="https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#method.hash_slice">Read more</a></p>
+</div></div><h3 id='impl-PartialEq' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html" title="trait core::cmp::PartialEq">PartialEq</a> for <a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a></code><a href='#impl-PartialEq' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#138' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.eq' class="method"><span id='eq.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#138' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>This method tests for <code>self</code> and <code>other</code> values to be equal, and is used by <code>==</code>. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq">Read more</a></p>
+</div><h4 id='method.ne' class="method"><span id='ne.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>Rhs) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code></span><span class='out-of-band'><div class='ghost'></div><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><a class='srclink' href='https://doc.rust-lang.org/nightly/src/core/cmp.rs.html#121' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>This method tests for <code>!=</code>.</p>
+</div></div><h3 id='impl-Eq' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html" title="trait core::cmp::Eq">Eq</a> for <a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a></code><a href='#impl-Eq' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#138' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'></div><h3 id='impl-PartialOrd' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html" title="trait core::cmp::PartialOrd">PartialOrd</a> for <a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a></code><a href='#impl-PartialOrd' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#138' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.partial_cmp' class="method"><span id='partial_cmp.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#tymethod.partial_cmp' class='fnname'>partial_cmp</a>(&amp;self, __arg_0: &amp;<a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="https://doc.rust-lang.org/nightly/core/cmp/enum.Ordering.html" title="enum core::cmp::Ordering">Ordering</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#138' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>This method returns an ordering between <code>self</code> and <code>other</code> values if one exists. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#tymethod.partial_cmp">Read more</a></p>
+</div><h4 id='method.lt' class="method"><span id='lt.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.lt' class='fnname'>lt</a>(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>Rhs) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code></span><span class='out-of-band'><div class='ghost'></div><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><a class='srclink' href='https://doc.rust-lang.org/nightly/src/core/cmp.rs.html#644-649' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>This method tests less than (for <code>self</code> and <code>other</code>) and is used by the <code>&lt;</code> operator. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.lt">Read more</a></p>
+</div><h4 id='method.le' class="method"><span id='le.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.le' class='fnname'>le</a>(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>Rhs) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code></span><span class='out-of-band'><div class='ghost'></div><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><a class='srclink' href='https://doc.rust-lang.org/nightly/src/core/cmp.rs.html#666-671' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>This method tests less than or equal to (for <code>self</code> and <code>other</code>) and is used by the <code>&lt;=</code> operator. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.le">Read more</a></p>
+</div><h4 id='method.gt' class="method"><span id='gt.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.gt' class='fnname'>gt</a>(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>Rhs) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code></span><span class='out-of-band'><div class='ghost'></div><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><a class='srclink' href='https://doc.rust-lang.org/nightly/src/core/cmp.rs.html#687-692' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>This method tests greater than (for <code>self</code> and <code>other</code>) and is used by the <code>&gt;</code> operator. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.gt">Read more</a></p>
+</div><h4 id='method.ge' class="method"><span id='ge.v' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.ge' class='fnname'>ge</a>(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;</a>Rhs) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code></span><span class='out-of-band'><div class='ghost'></div><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><a class='srclink' href='https://doc.rust-lang.org/nightly/src/core/cmp.rs.html#709-714' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>This method tests greater than or equal to (for <code>self</code> and <code>other</code>) and is used by the <code>&gt;=</code> operator. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.ge">Read more</a></p>
+</div></div><h3 id='impl-Encodable' class='impl'><span class='in-band'><code>impl <a class="trait" href="../../rustc_serialize/serialize/trait.Encodable.html" title="trait rustc_serialize::serialize::Encodable">Encodable</a> for <a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a></code><a href='#impl-Encodable' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#139' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.encode' class="method"><span id='encode.v' class='invisible'><code>fn <a href='../../rustc_serialize/serialize/trait.Encodable.html#tymethod.encode' class='fnname'>encode</a>&lt;__S:&nbsp;<a class="trait" href="../../rustc_serialize/serialize/trait.Encoder.html" title="trait rustc_serialize::serialize::Encoder">Encoder</a>&gt;(&amp;self, __arg_0: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>__S) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>, __S::<a class="type" href="../../rustc_serialize/serialize/trait.Encoder.html#associatedtype.Error" title="type rustc_serialize::serialize::Encoder::Error">Error</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#139' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Serialize a value using an <code>Encoder</code>.</p>
+</div></div><h3 id='impl-Decodable' class='impl'><span class='in-band'><code>impl <a class="trait" href="../../rustc_serialize/serialize/trait.Decodable.html" title="trait rustc_serialize::serialize::Decodable">Decodable</a> for <a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a></code><a href='#impl-Decodable' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#139' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.decode' class="method"><span id='decode.v' class='invisible'><code>fn <a href='../../rustc_serialize/serialize/trait.Decodable.html#tymethod.decode' class='fnname'>decode</a>&lt;__D:&nbsp;<a class="trait" href="../../rustc_serialize/serialize/trait.Decoder.html" title="trait rustc_serialize::serialize::Decoder">Decoder</a>&gt;(__arg_0: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut </a>__D) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a>, __D::<a class="type" href="../../rustc_serialize/serialize/trait.Decoder.html#associatedtype.Error" title="type rustc_serialize::serialize::Decoder::Error">Error</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/basic.rs.html#139' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Deserialize a value using a <code>Decoder</code>.</p>
+</div></div><h3 id='impl-FromPrimitive' class='impl'><span class='in-band'><code>impl <a class="trait" href="../../num_traits/cast/trait.FromPrimitive.html" title="trait num_traits::cast::FromPrimitive">FromPrimitive</a> for <a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a></code><a href='#impl-FromPrimitive' class='anchor'></a></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.from_i64' class="method"><span id='from_i64.v' class='invisible'><code>fn <a href='../../num_traits/cast/trait.FromPrimitive.html#tymethod.from_i64' class='fnname'>from_i64</a>(n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.i64.html">i64</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;Self&gt;</code></span></h4>
+<div class='docblock'><p>Convert an <code>i64</code> to return an optional value of this type. If the type cannot be represented by this value, the <code>None</code> is returned. <a href="../../num_traits/cast/trait.FromPrimitive.html#tymethod.from_i64">Read more</a></p>
+</div><h4 id='method.from_u64' class="method"><span id='from_u64.v' class='invisible'><code>fn <a href='../../num_traits/cast/trait.FromPrimitive.html#tymethod.from_u64' class='fnname'>from_u64</a>(n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;Self&gt;</code></span></h4>
+<div class='docblock'><p>Convert an <code>u64</code> to return an optional value of this type. If the type cannot be represented by this value, the <code>None</code> is returned. <a href="../../num_traits/cast/trait.FromPrimitive.html#tymethod.from_u64">Read more</a></p>
+</div><h4 id='method.from_isize' class="method"><span id='from_isize.v' class='invisible'><code>fn <a href='../../num_traits/cast/trait.FromPrimitive.html#method.from_isize' class='fnname'>from_isize</a>(n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.isize.html">isize</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/num_traits/cast.rs.html#282-284' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Convert an <code>isize</code> to return an optional value of this type. If the value cannot be represented by this value, the <code>None</code> is returned. <a href="../../num_traits/cast/trait.FromPrimitive.html#method.from_isize">Read more</a></p>
+</div><h4 id='method.from_i8' class="method"><span id='from_i8.v' class='invisible'><code>fn <a href='../../num_traits/cast/trait.FromPrimitive.html#method.from_i8' class='fnname'>from_i8</a>(n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.i8.html">i8</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/num_traits/cast.rs.html#289-291' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Convert an <code>i8</code> to return an optional value of this type. If the type cannot be represented by this value, the <code>None</code> is returned. <a href="../../num_traits/cast/trait.FromPrimitive.html#method.from_i8">Read more</a></p>
+</div><h4 id='method.from_i16' class="method"><span id='from_i16.v' class='invisible'><code>fn <a href='../../num_traits/cast/trait.FromPrimitive.html#method.from_i16' class='fnname'>from_i16</a>(n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.i16.html">i16</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/num_traits/cast.rs.html#296-298' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Convert an <code>i16</code> to return an optional value of this type. If the type cannot be represented by this value, the <code>None</code> is returned. <a href="../../num_traits/cast/trait.FromPrimitive.html#method.from_i16">Read more</a></p>
+</div><h4 id='method.from_i32' class="method"><span id='from_i32.v' class='invisible'><code>fn <a href='../../num_traits/cast/trait.FromPrimitive.html#method.from_i32' class='fnname'>from_i32</a>(n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.i32.html">i32</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/num_traits/cast.rs.html#303-305' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Convert an <code>i32</code> to return an optional value of this type. If the type cannot be represented by this value, the <code>None</code> is returned. <a href="../../num_traits/cast/trait.FromPrimitive.html#method.from_i32">Read more</a></p>
+</div><h4 id='method.from_usize' class="method"><span id='from_usize.v' class='invisible'><code>fn <a href='../../num_traits/cast/trait.FromPrimitive.html#method.from_usize' class='fnname'>from_usize</a>(n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/num_traits/cast.rs.html#314-316' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Convert a <code>usize</code> to return an optional value of this type. If the type cannot be represented by this value, the <code>None</code> is returned. <a href="../../num_traits/cast/trait.FromPrimitive.html#method.from_usize">Read more</a></p>
+</div><h4 id='method.from_u8' class="method"><span id='from_u8.v' class='invisible'><code>fn <a href='../../num_traits/cast/trait.FromPrimitive.html#method.from_u8' class='fnname'>from_u8</a>(n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/num_traits/cast.rs.html#321-323' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Convert an <code>u8</code> to return an optional value of this type. If the type cannot be represented by this value, the <code>None</code> is returned. <a href="../../num_traits/cast/trait.FromPrimitive.html#method.from_u8">Read more</a></p>
+</div><h4 id='method.from_u16' class="method"><span id='from_u16.v' class='invisible'><code>fn <a href='../../num_traits/cast/trait.FromPrimitive.html#method.from_u16' class='fnname'>from_u16</a>(n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/num_traits/cast.rs.html#328-330' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Convert an <code>u16</code> to return an optional value of this type. If the type cannot be represented by this value, the <code>None</code> is returned. <a href="../../num_traits/cast/trait.FromPrimitive.html#method.from_u16">Read more</a></p>
+</div><h4 id='method.from_u32' class="method"><span id='from_u32.v' class='invisible'><code>fn <a href='../../num_traits/cast/trait.FromPrimitive.html#method.from_u32' class='fnname'>from_u32</a>(n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/num_traits/cast.rs.html#335-337' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Convert an <code>u32</code> to return an optional value of this type. If the type cannot be represented by this value, the <code>None</code> is returned. <a href="../../num_traits/cast/trait.FromPrimitive.html#method.from_u32">Read more</a></p>
+</div><h4 id='method.from_f32' class="method"><span id='from_f32.v' class='invisible'><code>fn <a href='../../num_traits/cast/trait.FromPrimitive.html#method.from_f32' class='fnname'>from_f32</a>(n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.f32.html">f32</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/num_traits/cast.rs.html#346-348' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Convert a <code>f32</code> to return an optional value of this type. If the type cannot be represented by this value, the <code>None</code> is returned. <a href="../../num_traits/cast/trait.FromPrimitive.html#method.from_f32">Read more</a></p>
+</div><h4 id='method.from_f64' class="method"><span id='from_f64.v' class='invisible'><code>fn <a href='../../num_traits/cast/trait.FromPrimitive.html#method.from_f64' class='fnname'>from_f64</a>(n: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.f64.html">f64</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;Self&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/num_traits/cast.rs.html#353-355' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Convert a <code>f64</code> to return an optional value of this type. If the type cannot be represented by this value, the <code>None</code> is returned. <a href="../../num_traits/cast/trait.FromPrimitive.html#method.from_f64">Read more</a></p>
+</div></div><h3 id='impl-Display' class='impl'><span class='in-band'><code>impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html" title="trait core::fmt::Display">Display</a> for <a class="enum" href="../../bap/basic/enum.Arch.html" title="enum bap::basic::Arch">Arch</a></code><a href='#impl-Display' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/printers.rs.html#7-18' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt-1' class="method"><span id='fmt.v-1' class='invisible'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>, <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Error.html" title="struct core::fmt::Error">Error</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/bap/printers.rs.html#8-17' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Formats the value using the given formatter. <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#tymethod.fmt">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "bap";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

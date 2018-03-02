@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Expression","Native representation of a BIL expression"],["Statement","Native representation of a BIL statement"],["Type","Native representation of BAP types, which just describe the raw shape of the data rather than properties about it."]],"struct":[["Variable","Native representation of a variable"]]});
