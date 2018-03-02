@@ -18,7 +18,7 @@ pub struct BitVector {
 }
 
 #[cfg(feature = "json")]
-use rustc_serialize::{Encoder, Decoder, Encodable, Decodable};
+use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 #[cfg(feature = "json")]
 impl Encodable for BitVector {
     fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
@@ -46,8 +46,7 @@ impl ::std::fmt::Debug for BitVector {
         write!(
             f,
             "BitVector {{ native: {:?}, unum: {:?} }}",
-            self.native,
-            self.unum
+            self.native, self.unum
         )
     }
 }
@@ -71,8 +70,8 @@ impl BitVector {
         }
     }
     /// Creates a new `BitVector` from the number it is to represent and its length in bits
-    pub fn new_unsigned(num: BigUint, len: usize) -> Self {
-        //assert!(num.bits() <= len);
+    /// Will truncate the representation if it is too large (think `& 0xFFF`)
+    pub fn new_unsigned(num: &BigUint, len: usize) -> Self {
         let mut bv = BitVec::from_bytes(&num.to_bytes_le());
         let bvlen = bv.len();
         if len > bvlen {
@@ -104,6 +103,10 @@ impl BitVector {
     pub fn len(&self) -> usize {
         self.native.len()
     }
+    /// Whether this is the null bitvector (as produced by `nil()`)
+    pub fn is_empty(&self) -> bool {
+        self.native.is_empty()
+    }
     /// Get the value of the `BitVector` as an unsigned bignum
     pub fn unum(&self) -> BigUint {
         self.unum.clone()
@@ -112,7 +115,7 @@ impl BitVector {
     /// Length must be long enough to contain the `u64` value.
     pub fn from_u64(val: u64, len: usize) -> Self {
         let unum = BigUint::from_u64(val).unwrap();
-        Self::new_unsigned(unum, len)
+        Self::new_unsigned(&unum, len)
     }
 }
 
@@ -131,10 +134,7 @@ impl<'a> ::std::ops::Add for &'a BitVector {
     fn add(self, rhs: &'a BitVector) -> BitVector {
         //assert_eq!(self.native.len(), rhs.native.len());
         let len = ::std::cmp::max(self.native.len(), rhs.native.len());
-        BitVector::new_unsigned(
-            overflow(&self.unum + &rhs.unum, len),
-            len
-        )
+        BitVector::new_unsigned(&overflow(&self.unum + &rhs.unum, len), len)
     }
 }
 
@@ -142,10 +142,7 @@ impl<'a> ::std::ops::Add<usize> for &'a BitVector {
     type Output = BitVector;
     fn add(self, rhs: usize) -> BitVector {
         BitVector::new_unsigned(
-            overflow(
-                &self.unum + BigUint::from_usize(rhs).unwrap(),
-                self.native.len(),
-            ),
+            &overflow(&self.unum + rhs, self.native.len()),
             self.native.len(),
         )
     }

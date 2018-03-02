@@ -59,27 +59,21 @@ impl Statement {
         use basic::StatementTag;
         use self::Statement::*;
         match stmt.tag().unwrap() {
-            StatementTag::Move => {
-                Move {
-                    lhs: Variable::from_basic(&stmt.var().unwrap()),
-                    rhs: Expression::from_basic(&stmt.exp().unwrap()),
-                }
-            }
+            StatementTag::Move => Move {
+                lhs: Variable::from_basic(&stmt.var().unwrap()),
+                rhs: Expression::from_basic(&stmt.exp().unwrap()),
+            },
             StatementTag::Jmp => Jump(Expression::from_basic(&stmt.exp().unwrap())),
             StatementTag::Special => Special,
-            StatementTag::While => {
-                While {
-                    cond: Expression::from_basic(&stmt.exp().unwrap()),
-                    body: stmts(stmt.stmts()),
-                }
-            }
-            StatementTag::If => {
-                IfThenElse {
-                    cond: Expression::from_basic(&stmt.exp().unwrap()),
-                    then_clause: stmts(stmt.true_stmts()),
-                    else_clause: stmts(stmt.false_stmts()),
-                }
-            }
+            StatementTag::While => While {
+                cond: Expression::from_basic(&stmt.exp().unwrap()),
+                body: stmts(stmt.stmts()),
+            },
+            StatementTag::If => IfThenElse {
+                cond: Expression::from_basic(&stmt.exp().unwrap()),
+                then_clause: stmts(stmt.true_stmts()),
+                else_clause: stmts(stmt.false_stmts()),
+            },
             StatementTag::CpuExn => CPUException(stmt.cpuexn().unwrap()),
         }
     }
@@ -197,78 +191,58 @@ impl Expression {
         use basic::ExpressionTag;
         use self::Expression::*;
         match e.tag().unwrap() {
-            ExpressionTag::UnOp => {
-                UnOp {
-                    op: e.unop().unwrap(),
-                    arg: exp(e.exp()),
-                }
-            }
-            ExpressionTag::Load => {
-                Load {
-                    memory: exp(e.mem()),
-                    index: exp(e.addr()),
-                    endian: e.endian().unwrap(),
-                    size: e.size().unwrap(),
-                }
-            }
-            ExpressionTag::Unknown => {
-                Unknown {
-                    description: e.unknown_msg().unwrap(),
-                    type_: Type::from_basic(&e.unknown_type().unwrap()),
-                }
-            }
-            ExpressionTag::Cast => {
-                Cast {
-                    kind: e.cast().unwrap(),
-                    width: e.cast_size().unwrap(),
-                    arg: exp(e.exp()),
-                }
-            }
-            ExpressionTag::Store => {
-                Store {
-                    memory: exp(e.mem()),
-                    index: exp(e.addr()),
-                    endian: e.endian().unwrap(),
-                    size: e.size().unwrap(),
-                    value: exp(e.rhs()),
-                }
-            }
+            ExpressionTag::UnOp => UnOp {
+                op: e.unop().unwrap(),
+                arg: exp(e.exp()),
+            },
+            ExpressionTag::Load => Load {
+                memory: exp(e.mem()),
+                index: exp(e.addr()),
+                endian: e.endian().unwrap(),
+                size: e.size().unwrap(),
+            },
+            ExpressionTag::Unknown => Unknown {
+                description: e.unknown_msg().unwrap(),
+                type_: Type::from_basic(&e.unknown_type().unwrap()),
+            },
+            ExpressionTag::Cast => Cast {
+                kind: e.cast().unwrap(),
+                width: e.cast_size().unwrap(),
+                arg: exp(e.exp()),
+            },
+            ExpressionTag::Store => Store {
+                memory: exp(e.mem()),
+                index: exp(e.addr()),
+                endian: e.endian().unwrap(),
+                size: e.size().unwrap(),
+                value: exp(e.rhs()),
+            },
             ExpressionTag::Var => Var(Variable::from_basic(&e.var().unwrap())),
-            ExpressionTag::Let => {
-                Let {
-                    bound_var: Variable::from_basic(&e.var().unwrap()),
-                    bound_expr: exp(e.rhs()),
-                    body_expr: exp(e.exp()),
-                }
-            }
-            ExpressionTag::ITE => {
-                IfThenElse {
-                    cond: exp(e.exp()),
-                    true_expr: exp(e.lhs()),
-                    false_expr: exp(e.rhs()),
-                }
-            }
+            ExpressionTag::Let => Let {
+                bound_var: Variable::from_basic(&e.var().unwrap()),
+                bound_expr: exp(e.rhs()),
+                body_expr: exp(e.exp()),
+            },
+            ExpressionTag::ITE => IfThenElse {
+                cond: exp(e.exp()),
+                true_expr: exp(e.lhs()),
+                false_expr: exp(e.rhs()),
+            },
             ExpressionTag::Int => Const(BitVector::from_basic(&e.value().unwrap())),
-            ExpressionTag::Concat => {
-                Concat {
-                    low: exp(e.lhs()),
-                    high: exp(e.rhs()),
-                }
-            }
-            ExpressionTag::Extract => {
-                Extract {
-                    low_bit: e.extract_lobit().unwrap(),
-                    high_bit: e.extract_hibit().unwrap(),
-                    arg: exp(e.exp()),
-                }
-            }
-            ExpressionTag::BinOp => {
-                BinOp {
-                    op: e.binop().unwrap(),
-                    lhs: exp(e.lhs()),
-                    rhs: exp(e.rhs()),
-                }
-            }
+            ExpressionTag::Concat => Concat {
+                low: exp(e.lhs()),
+                high: exp(e.rhs()),
+            },
+            ExpressionTag::Extract => Extract {
+                low_bit: e.extract_lobit().unwrap(),
+                high_bit: e.extract_hibit().unwrap(),
+                arg: exp(e.exp()),
+            },
+            ExpressionTag::BinOp => BinOp {
+                op: e.binop().unwrap(),
+                lhs: exp(e.lhs()),
+                rhs: exp(e.rhs()),
+            },
         }
     }
 }
@@ -323,12 +297,10 @@ impl Type {
     pub fn from_basic(type_: &basic::Type) -> Self {
         use basic::TypeTag;
         match type_.tag().unwrap() {
-            TypeTag::Memory => {
-                Type::Memory {
-                    addr_size: type_.addr_size().unwrap(),
-                    cell_size: type_.cell_size().unwrap(),
-                }
-            }
+            TypeTag::Memory => Type::Memory {
+                addr_size: type_.addr_size().unwrap(),
+                cell_size: type_.cell_size().unwrap(),
+            },
             TypeTag::Immediate => Type::Immediate(type_.imm().unwrap()),
         }
     }

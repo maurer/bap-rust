@@ -12,7 +12,7 @@ use holmes::pg::dyn::{Type, Value};
 use holmes::pg::dyn::values::ToValue;
 use num::traits::FromPrimitive;
 use std::error::Error;
-use postgres::types::{ToSql, IsNull};
+use postgres::types::{IsNull, ToSql};
 use rustc_serialize::json::{Decoder, Json};
 use rustc_serialize::json;
 use rustc_serialize::Decodable;
@@ -25,9 +25,8 @@ impl TypeT for BitVectorType {
         Some("bitvector")
     }
     fn extract(&self, cols: &mut RowIter) -> Option<Value> {
-        cols.next().map(
-            |col| Arc::new(BitVector::new(&col)) as Value,
-        )
+        cols.next()
+            .map(|col| Arc::new(BitVector::new(&col)) as Value)
     }
     fn repr(&self) -> &'static str {
         "bit varying"
@@ -62,9 +61,8 @@ impl TypeT for ArchType {
         Some("arch")
     }
     fn extract(&self, cols: &mut RowIter) -> Option<Value> {
-        cols.next().and_then(|col| {
-            Arch::from_i16(col).map(|arch| Arc::new(arch) as Value)
-        })
+        cols.next()
+            .and_then(|col| Arch::from_i16(col).map(|arch| Arc::new(arch) as Value))
     }
     fn repr(&self) -> &'static str {
         "smallint"

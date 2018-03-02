@@ -4,7 +4,7 @@
 
 use bap_sys;
 use std::ffi::{CStr, CString};
-use std::ptr::{null_mut, null};
+use std::ptr::{null, null_mut};
 use std::sync::{Once, ONCE_INIT};
 use std::result;
 use std::cell::Cell;
@@ -59,12 +59,10 @@ impl CastFrom<int> for BitSize {
 
 // Wraps a potentially errored BAP value into a `Result` type
 unsafe fn bap_error<T>(v: *mut T) -> Result<*mut T> {
-    if v == null_mut() {
-        let out = Err(
-            CStr::from_ptr(bap_sys::bap_error_get())
-                .to_string_lossy()
-                .into_owned(),
-        );
+    if v.is_null() {
+        let out = Err(CStr::from_ptr(bap_sys::bap_error_get())
+            .to_string_lossy()
+            .into_owned());
         bap_sys::bap_error_clean();
         out
     } else {
@@ -74,7 +72,11 @@ unsafe fn bap_error<T>(v: *mut T) -> Result<*mut T> {
 
 // Wraps a nullable BAP value into an `Option` type
 unsafe fn bap_option<T>(v: *mut T) -> Option<*mut T> {
-    if v == null_mut() { None } else { Some(v) }
+    if v.is_null() {
+        None
+    } else {
+        Some(v)
+    }
 }
 
 // Copies a string from BAP to Rust
@@ -201,17 +203,16 @@ fn rc1() -> Rc<Cell<usize>> {
     Rc::new(Cell::new(1))
 }
 
-
 type PU<'a> = PhantomData<&'a ()>;
 
 // This macro declares a RAII wrapper type for a BAP foreign
 // pointer
 macro_rules! abs_type {
-    ($c_name:ident, $cap_name:ident) => {
-        abs_type!($c_name, $cap_name, PU);
+    ($(#[$attr:meta])* $c_name:ident, $cap_name:ident) => {
+        abs_type!($(#[$attr])* $c_name, $cap_name, PU);
     };
-    ($c_name:ident, $cap_name:ident, $extra:ident) => {
-        #[allow(missing_docs)]
+    ($(#[$attr:meta])* $c_name:ident, $cap_name:ident, $extra:ident) => {
+        $(#[$attr])*
         pub struct $cap_name<'a> {
             bap_sys: *mut bap_sys::$c_name,
             rc: Rc<Cell<usize>>,
@@ -247,52 +248,99 @@ struct ImageBacking<'a> {
     _backing: Option<&'a [u8]>,
 }
 
-/// BAP type representing a loaded program image
-abs_type!(bap_image_t, Image, ImageBacking);
-/// BAP type representing an arbitrary length bitvector
-abs_type!(bap_word_t, Word, PU);
-/// BAP type representing a sequence of segments
-abs_type!(bap_segment_seq_t, SegmentSequence, Image);
-/// BAP type representing an iterator of a segment sequence
 abs_type!(
+    /// Safe wrapper around a loaded program image
+    bap_image_t,
+    Image,
+    ImageBacking
+);
+abs_type!(
+    /// Safe wrapper around an arbitrary length bitvector
+    bap_word_t,
+    Word
+);
+abs_type!(
+    /// Safe wrapper around a sequence of segments
+    bap_segment_seq_t,
+    SegmentSequence,
+    Image
+);
+abs_type!(
+    /// Safe wrapper around an iterator of a segment sequence
     bap_segment_seq_iterator_t,
     SegmentSequenceIterator,
     SegmentSequence
 );
-/// BAP type representing a sequence of symbols
-abs_type!(bap_symbol_seq_t, SymbolSequence, Image);
-/// BAP type representing an iterator of a segment sequence
 abs_type!(
+    /// Safe wrapper around a sequence of symbols
+    bap_symbol_seq_t,
+    SymbolSequence,
+    Image
+);
+abs_type!(
+    /// Safe wrapper around an iterator of a segment sequence
     bap_symbol_seq_iterator_t,
     SymbolSequenceIterator,
     SymbolSequence
 );
-/// BAP type representing a segment
-abs_type!(bap_segment_t, Segment, Image);
-/// BAP type representing a symbol
-abs_type!(bap_symbol_t, Symbol, Image);
-/// BAP type representing a region of memory
-abs_type!(bap_memory_t, Memory);
-/// BAP type representing a single instruction + associated data
-abs_type!(bap_code_t, Code);
-/// BAP type representing an instruction
-abs_type!(bap_insn_t, Instruction);
-/// BAP type repsenting a sequence of statements
-abs_type!(bap_stmt_seq_t, StatementSequence);
-/// BAP type representing an iterator of a segment sequence
 abs_type!(
+    /// Safe wrapper around a segment
+    bap_segment_t,
+    Segment,
+    Image
+);
+abs_type!(
+    /// Safe wrapper around a symbol
+    bap_symbol_t,
+    Symbol,
+    Image
+);
+abs_type!(
+    /// Safe wrapper around a region of memory
+    bap_memory_t,
+    Memory
+);
+abs_type!(
+    /// Safe wrapper around a single instruction + associated data
+    bap_code_t,
+    Code
+);
+abs_type!(
+    /// Safe wrapper around an instruction
+    bap_insn_t,
+    Instruction
+);
+abs_type!(
+    /// BAP type repsenting a sequence of statements
+    bap_stmt_seq_t,
+    StatementSequence
+);
+abs_type!(
+    /// Safe wrapper around an iterator of a segment sequence
     bap_stmt_seq_iterator_t,
     StatementSequenceIterator,
     StatementSequence
 );
-/// BAP type repsenting BIL semantic statement
-abs_type!(bap_stmt_t, Statement);
-/// BAP type representing a BIL expression
-abs_type!(bap_exp_t, Expression);
-/// BAP type representing a BIL variable
-abs_type!(bap_var_t, Variable);
-/// BAP type representing a BIL type
-abs_type!(bap_type_t, Type);
+abs_type!(
+    /// BAP type repsenting BIL semantic statement
+    bap_stmt_t,
+    Statement
+);
+abs_type!(
+    /// Safe wrapper around a BIL expression
+    bap_exp_t,
+    Expression
+);
+abs_type!(
+    /// Safe wrapper around a BIL variable
+    bap_var_t,
+    Variable
+);
+abs_type!(
+    /// Safe wrapper around a BIL type
+    bap_type_t,
+    Type
+);
 
 impl<'a> Image<'a> {
     /// Create an `Image` by having BAP read a file from disk
@@ -320,7 +368,9 @@ impl<'a> Image<'a> {
                     null_mut(),
                 ))?,
                 rc: rc1(),
-                extra: ImageBacking { _backing: Some(data) },
+                extra: ImageBacking {
+                    _backing: Some(data),
+                },
             })
         }
     }
@@ -388,13 +438,14 @@ fn load_test() {
     let mut data = Vec::new();
     File::open(path).unwrap().read_to_end(&mut data).unwrap();
     (|| -> Result<()> {
-         let image = Image::from_file(&bap, path)?;
-         assert_eq!(path, &image.filename());
-         let image2 = Image::from_data(&bap, &data)?;
-         assert_eq!(data, image.data());
-         assert_eq!(data, image2.data());
-         Ok(())
-     })().unwrap()
+        let image = Image::from_file(&bap, path)?;
+        assert_eq!(path, &image.filename());
+        let image2 = Image::from_data(&bap, &data)?;
+        assert_eq!(data, image.data());
+        assert_eq!(data, image2.data());
+        Ok(())
+    })()
+        .unwrap()
 }
 
 #[test]
@@ -436,7 +487,7 @@ impl<'a> Iterator for SegmentSequenceIterator<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         unsafe {
             let raw = bap_sys::bap_segment_seq_iterator_next(self.bap_sys);
-            if raw == null_mut() {
+            if raw.is_null() {
                 None
             } else {
                 Some(Segment {
@@ -467,7 +518,7 @@ impl<'a> Iterator for SymbolSequenceIterator<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         unsafe {
             let raw = bap_sys::bap_symbol_seq_iterator_next(self.bap_sys);
-            if raw == null_mut() {
+            if raw.is_null() {
                 None
             } else {
                 Some(Symbol {
@@ -591,7 +642,7 @@ impl<'a> Word<'a> {
     }
 }
 
-/// Representation of a BAP Basic Disassembler
+/// Safe wrapper around a Basic Disassembler
 pub struct BasicDisasm<'a> {
     bap_sys: *mut bap_sys::bap_disasm_basic_t,
     rc: Rc<Cell<usize>>,
@@ -604,7 +655,7 @@ impl<'a> Clone for BasicDisasm<'a> {
         BasicDisasm {
             bap_sys: self.bap_sys,
             rc: self.rc.clone(),
-            extra: self.extra.clone(),
+            extra: PhantomData,
         }
     }
 }
@@ -655,6 +706,7 @@ impl<'a> BasicDisasm<'a> {
     }
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(len_without_is_empty))]
 impl<'a> Code<'a> {
     /// Get a BAP memory object of the region containing this instruction
     pub fn memory(&self) -> Memory<'a> {
@@ -740,13 +792,13 @@ impl<'a> Iterator for StatementSequenceIterator<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         unsafe {
             let raw = bap_sys::bap_stmt_seq_iterator_next(self.bap_sys);
-            if raw == null_mut() {
+            if raw.is_null() {
                 None
             } else {
                 Some(Statement {
                     bap_sys: raw,
                     rc: rc1(),
-                    extra: self.extra.extra.clone(),
+                    extra: PhantomData,
                 })
             }
         }
@@ -795,60 +847,50 @@ impl<'a> Statement<'a> {
     /// Gets the expression argument of the BIL statement, if present
     pub fn exp(&self) -> Option<Expression> {
         unsafe {
-            bap_option(bap_sys::bap_stmt_exp(self.bap_sys)).map(|exp| {
-                Expression {
-                    bap_sys: exp,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_stmt_exp(self.bap_sys)).map(|exp| Expression {
+                bap_sys: exp,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
     /// Gets the variable argument of the BIL statement, if present
     pub fn var(&self) -> Option<Variable> {
         unsafe {
-            bap_option(bap_sys::bap_stmt_var(self.bap_sys)).map(|var| {
-                Variable {
-                    bap_sys: var,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_stmt_var(self.bap_sys)).map(|var| Variable {
+                bap_sys: var,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
     /// Gets the block of statements for the BIL statement, if present
     pub fn stmts(&self) -> Option<StatementSequence> {
         unsafe {
-            bap_option(bap_sys::bap_stmt_stmts(self.bap_sys)).map(|stmts| {
-                StatementSequence {
-                    bap_sys: stmts,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_stmt_stmts(self.bap_sys)).map(|stmts| StatementSequence {
+                bap_sys: stmts,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
     /// Gets the true-branch block of statements for the BIL statement, if present
     pub fn true_stmts(&self) -> Option<StatementSequence> {
         unsafe {
-            bap_option(bap_sys::bap_stmt_true_stmts(self.bap_sys)).map(|stmts| {
-                StatementSequence {
-                    bap_sys: stmts,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_stmt_true_stmts(self.bap_sys)).map(|stmts| StatementSequence {
+                bap_sys: stmts,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
     /// Gets the false-branch block of statements for the BIL statement, if present
     pub fn false_stmts(&self) -> Option<StatementSequence> {
         unsafe {
-            bap_option(bap_sys::bap_stmt_false_stmts(self.bap_sys)).map(|stmts| {
-                StatementSequence {
-                    bap_sys: stmts,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_stmt_false_stmts(self.bap_sys)).map(|stmts| StatementSequence {
+                bap_sys: stmts,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
@@ -859,12 +901,10 @@ impl<'a> Statement<'a> {
     /// Gets the jump target expression, if present
     pub fn jmp(&self) -> Option<Expression> {
         unsafe {
-            bap_option(bap_sys::bap_stmt_jmp(self.bap_sys)).map(|jmp| {
-                Expression {
-                    bap_sys: jmp,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_stmt_jmp(self.bap_sys)).map(|jmp| Expression {
+                bap_sys: jmp,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
@@ -925,7 +965,7 @@ impl ExpressionTag {
 }
 
 /// Unary Operations
-#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd, Eq)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
 #[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum UnOp {
     /// Bitwise not
@@ -947,7 +987,7 @@ impl UnOp {
 }
 
 /// Binary Operations
-#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd, Eq)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
 #[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum BinOp {
     /// Signed less than or equal
@@ -1020,7 +1060,7 @@ impl BinOp {
 }
 
 /// BIL Cast kinds
-#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd, Eq)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
 #[cfg_attr(feature = "json", derive(RustcEncodable, RustcDecodable))]
 pub enum Cast {
     /// Cast prefers low bits
@@ -1077,12 +1117,10 @@ impl<'a> Expression<'a> {
     /// Gets the memory argument for the expression, if present
     pub fn mem(&self) -> Option<Expression> {
         unsafe {
-            bap_option(bap_sys::bap_exp_mem(self.bap_sys)).map(|exp| {
-                Expression {
-                    bap_sys: exp,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_exp_mem(self.bap_sys)).map(|exp| Expression {
+                bap_sys: exp,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
@@ -1093,36 +1131,30 @@ impl<'a> Expression<'a> {
     /// Gets the address argument for the expression, if present
     pub fn addr(&self) -> Option<Expression> {
         unsafe {
-            bap_option(bap_sys::bap_exp_addr(self.bap_sys)).map(|exp| {
-                Expression {
-                    bap_sys: exp,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_exp_addr(self.bap_sys)).map(|exp| Expression {
+                bap_sys: exp,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
     /// Gets the expression argument for the expression, if present
     pub fn exp(&self) -> Option<Expression> {
         unsafe {
-            bap_option(bap_sys::bap_exp_exp(self.bap_sys)).map(|exp| {
-                Expression {
-                    bap_sys: exp,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_exp_exp(self.bap_sys)).map(|exp| Expression {
+                bap_sys: exp,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
     /// Gets the variable argument of the BIL statement, if present
     pub fn var(&self) -> Option<Variable> {
         unsafe {
-            bap_option(bap_sys::bap_exp_var(self.bap_sys)).map(|var| {
-                Variable {
-                    bap_sys: var,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_exp_var(self.bap_sys)).map(|var| Variable {
+                bap_sys: var,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
@@ -1130,24 +1162,20 @@ impl<'a> Expression<'a> {
     /// Gets the left hand side for the expression, if present
     pub fn lhs(&self) -> Option<Expression> {
         unsafe {
-            bap_option(bap_sys::bap_exp_lhs(self.bap_sys)).map(|exp| {
-                Expression {
-                    bap_sys: exp,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_exp_lhs(self.bap_sys)).map(|exp| Expression {
+                bap_sys: exp,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
     /// Gets the right hand side for the expression, if present
     pub fn rhs(&self) -> Option<Expression> {
         unsafe {
-            bap_option(bap_sys::bap_exp_rhs(self.bap_sys)).map(|exp| {
-                Expression {
-                    bap_sys: exp,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_exp_rhs(self.bap_sys)).map(|exp| Expression {
+                bap_sys: exp,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
@@ -1166,12 +1194,10 @@ impl<'a> Expression<'a> {
     /// Gets the value for the expression, if present
     pub fn value(&self) -> Option<Word> {
         unsafe {
-            bap_option(bap_sys::bap_exp_value(self.bap_sys)).map(|value| {
-                Word {
-                    bap_sys: value,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_exp_value(self.bap_sys)).map(|value| Word {
+                bap_sys: value,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
@@ -1198,12 +1224,10 @@ impl<'a> Expression<'a> {
     /// Gets the type of an unknown expression, if present
     pub fn unknown_type(&self) -> Option<Type> {
         unsafe {
-            bap_option(bap_sys::bap_exp_unknown_typ(self.bap_sys)).map(|type_| {
-                Type {
-                    bap_sys: type_,
-                    rc: rc1(),
-                    extra: PhantomData,
-                }
+            bap_option(bap_sys::bap_exp_unknown_typ(self.bap_sys)).map(|type_| Type {
+                bap_sys: type_,
+                rc: rc1(),
+                extra: PhantomData,
             })
         }
     }
@@ -1302,6 +1326,10 @@ impl<'a> Memory<'a> {
             slice::from_raw_parts(data, len).to_owned()
         }
     }
+    /// Check if the memory region is trivial, e.g. length is zero
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 /// Generates from an executable file a list of suspected function entry points for the file.
@@ -1325,7 +1353,7 @@ pub fn roots<'a>(data: &[u8]) -> Vec<Word<'a>> {
         {
             use std::io::Write;
             let mut bap_fd = ::std::fs::File::create(&bap_temp).unwrap();
-            bap_fd.write(data).unwrap();
+            bap_fd.write_all(data).unwrap();
         }
         let bap_path_buf = bap_temp.to_path_buf();
         //NORELEASE leaks memory
@@ -1349,8 +1377,6 @@ pub fn roots<'a>(data: &[u8]) -> Vec<Word<'a>> {
                 rc: rc1(),
                 extra: PhantomData,
             })
-
-
         }
         out
     }

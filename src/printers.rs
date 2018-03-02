@@ -1,8 +1,8 @@
-use std::fmt::{Formatter, Display, Error};
+use std::fmt::{Display, Error, Formatter};
 use std::result::Result;
 use basic::Arch;
 use high::bitvector::BitVector;
-use high::bil::{Variable, Type};
+use high::bil::{Type, Variable};
 
 impl Display for Arch {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
