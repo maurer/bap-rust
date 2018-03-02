@@ -29,6 +29,6 @@ let vim = vim_configurable.customize {
 stdenv.mkDerivation rec {
   name = "bap-rust";
   buildInputs = [ rust libbap vim ];
-  LIBCLANG_PATH = "${llvmPackages.clang-unwrapped}/lib";
+  LIBCLANG_PATH = "${llvmPackages.clang-unwrapped.lib}/lib";
 }
 ) {rust = nixpkgs.rustChannels.nightly.rust; }
