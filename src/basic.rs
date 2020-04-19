@@ -7,6 +7,7 @@ use bit_vec::BitVec;
 use enum_primitive::FromPrimitive;
 use std::cell::Cell;
 use std::ffi::{CStr, CString};
+use std::fmt;
 use std::marker::PhantomData;
 use std::ptr::{null, null_mut};
 use std::rc::Rc;
@@ -188,8 +189,9 @@ impl Arch {
     fn from_bap(a: bap_sys::bap_arch_t) -> Option<Self> {
         Arch::from_i32(a as i32)
     }
-    fn to_bap(&self) -> bap_sys::bap_arch_t {
-        unsafe { ::std::mem::transmute(*self as i32) }
+
+    fn to_bap(self) -> bap_sys::bap_arch_t {
+        unsafe { ::std::mem::transmute(self as i32) }
     }
 }
 
@@ -229,7 +231,7 @@ macro_rules! abs_type {
             }
         }
         impl<'a> Drop for $cap_name<'a> {
-            fn drop(&mut self) ->() {
+            fn drop(&mut self) {
                 let rc = self.rc.get();
                 if rc == 1 {
                     unsafe {
@@ -663,7 +665,7 @@ impl<'a> Clone for BasicDisasm<'a> {
 }
 
 impl<'a> Drop for BasicDisasm<'a> {
-    fn drop(&mut self) -> () {
+    fn drop(&mut self) {
         let rc = self.rc.get();
         if rc == 1 {
             unsafe {
@@ -708,7 +710,7 @@ impl<'a> BasicDisasm<'a> {
     }
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(len_without_is_empty))]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::len_without_is_empty))]
 impl<'a> Code<'a> {
     /// Get a BAP memory object of the region containing this instruction
     pub fn memory(&self) -> Memory<'a> {
@@ -735,14 +737,20 @@ impl<'a> Code<'a> {
         unsafe { bap_sys::bap_code_addr(self.bap_sys) as u64 }
     }
     /// Get a string representation of the code
-    pub fn to_string(&self) -> String {
+    fn bap_string(&self) -> String {
         unsafe { bap_string(bap_sys::bap_code_to_string(self.bap_sys)) }
+    }
+}
+
+impl<'a> fmt::Display for Code<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.bap_string())
     }
 }
 
 impl<'a> Instruction<'a> {
     /// Get a string representation of the instruction
-    pub fn to_string(&self) -> String {
+    fn bap_string(&self) -> String {
         unsafe { bap_string(bap_sys::bap_insn_to_string(self.bap_sys)) }
     }
     /// Get the name of the instruction
@@ -773,6 +781,12 @@ impl<'a> Instruction<'a> {
     /// fallthrough address
     pub fn may_affect_control_flow(&self) -> bool {
         unsafe { bap_sys::bap_insn_may_affect_control_flow(self.bap_sys) }
+    }
+}
+
+impl<'a> fmt::Display for Instruction<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.bap_string())
     }
 }
 
