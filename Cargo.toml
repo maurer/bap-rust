@@ -1,6 +1,6 @@
 [package]
-
 name = "bap"
+edition = "2018"
 version = "0.1.0"
 authors = [ "Matthew Maurer <maurer@matthewmaurer.org>" ]
 license = "MIT"

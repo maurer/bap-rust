@@ -2,7 +2,6 @@
 //! It essentially re-exports all functions from `bap-bindings` with
 //! safety wrappers.
 
-use bap_sys;
 use bit_vec::BitVec;
 use enum_primitive::FromPrimitive;
 use std::cell::Cell;
