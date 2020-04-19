@@ -34,6 +34,8 @@ fn main() {
         .header("bap-sys.h")
         // TODO: Migrate to non-exhaustive enums.
         .rustified_enum(".*")
+        .whitelist_function("bap_.*")
+        .whitelist_type("bap_.*")
         .generate()
         .expect("Unable to generate bindings")
         .write_to_file(out_path.join("bap.rs"))
