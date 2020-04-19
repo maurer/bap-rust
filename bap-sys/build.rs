@@ -1,5 +1,5 @@
-extern crate pkg_config;
 extern crate bindgen;
+extern crate pkg_config;
 
 use std::env;
 use std::path::PathBuf;
@@ -27,14 +27,13 @@ fn main() {
         println!("cargo:include={}", include_dir);
     }
 
-    // This line should not be necessary, but bindgen seems to be ignoring
-    // .link()
     println!("cargo:rustc-link-lib=bap");
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindgen::builder()
         .header("bap-sys.h")
-        .link("bap")
+        // TODO: Migrate to non-exhaustive enums.
+        .rustified_enum(".*")
         .generate()
         .expect("Unable to generate bindings")
         .write_to_file(out_path.join("bap.rs"))
