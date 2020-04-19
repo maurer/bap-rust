@@ -6,7 +6,7 @@ use num::traits::FromPrimitive;
 use num::pow;
 
 use std::ops::BitAnd;
-use basic;
+use crate::basic;
 
 /// A `BitVector` is a wrapper around a `BitVec` allowing it to do perform arbitrary-but-fixed
 /// width two's complement arithmetic. This is useful when talking about CPU-level values, which
@@ -23,7 +23,7 @@ use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 impl Encodable for BitVector {
     fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
         s.emit_struct("BitVector", 2, |s| {
-            try!(s.emit_struct_field("unum", 0, |s| self.unum.encode(s)));
+            r#try!(s.emit_struct_field("unum", 0, |s| self.unum.encode(s)));
             s.emit_struct_field("len", 1, |s| self.native.len().encode(s))
         })
     }
@@ -32,9 +32,9 @@ impl Encodable for BitVector {
 #[cfg(feature = "json")]
 impl Decodable for BitVector {
     fn decode<D: Decoder>(d: &mut D) -> Result<Self, D::Error> {
-        let (unum, len): (BigUint, usize) = try!(d.read_struct("BitVector", 2, |d| {
-            let unum = try!(d.read_struct_field("unum", 0, |d| BigUint::decode(d)));
-            let len = try!(d.read_struct_field("len", 1, |d| usize::decode(d)));
+        let (unum, len): (BigUint, usize) = r#try!(d.read_struct("BitVector", 2, |d| {
+            let unum = r#try!(d.read_struct_field("unum", 0, |d| BigUint::decode(d)));
+            let len = r#try!(d.read_struct_field("len", 1, |d| usize::decode(d)));
             Ok((unum, len))
         }));
         Ok(BitVector::new_unsigned(&unum, len))

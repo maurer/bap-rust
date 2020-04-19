@@ -6,7 +6,7 @@ pub mod bil;
 
 #[test]
 fn high_smoke() {
-    use basic;
+    use crate::basic;
     use self::bitvector::BitVector;
     use self::bil::Statement;
     use num::ToPrimitive;

@@ -3,17 +3,17 @@
 //! safety wrappers.
 
 use bap_sys;
-use std::ffi::{CStr, CString};
-use std::ptr::{null, null_mut};
-use std::sync::{Once, ONCE_INIT};
-use std::result;
-use std::cell::Cell;
-use std::marker::PhantomData;
-use std::slice;
-use std::rc::Rc;
-use enum_primitive::FromPrimitive;
-use std::sync::{Mutex, MutexGuard};
 use bit_vec::BitVec;
+use enum_primitive::FromPrimitive;
+use std::cell::Cell;
+use std::ffi::{CStr, CString};
+use std::marker::PhantomData;
+use std::ptr::{null, null_mut};
+use std::rc::Rc;
+use std::result;
+use std::slice;
+use std::sync::Once;
+use std::sync::{Mutex, MutexGuard};
 
 #[allow(non_camel_case_types)]
 type char = ::std::os::raw::c_char;
@@ -38,7 +38,7 @@ pub type Result<T> = result::Result<T, String>;
 
 // Rust doesn't have a trait for `as` for some reason
 trait CastFrom<T> {
-    fn cast(T) -> Self;
+    fn cast(_: T) -> Self;
 }
 
 impl CastFrom<int> for usize {
@@ -95,9 +95,9 @@ fn bap_opt_int<T: CastFrom<int>>(v: int) -> Option<T> {
 }
 
 // Ensures `bap_init` and `bap_load_plugins` are called exactly once
-static BAP_INIT: Once = ONCE_INIT;
+static BAP_INIT: Once = Once::new();
 lazy_static! {
-static ref BAP_LOCK: Mutex<()> = Mutex::new(());
+    static ref BAP_LOCK: Mutex<()> = Mutex::new(());
 }
 
 /// This is a context struct to prove you are on the unique query thread without
@@ -131,7 +131,7 @@ impl Bap {
     }
 }
 
-enum_from_primitive!{
+enum_from_primitive! {
 /// Native enum for BAP architectures
 #[allow(missing_docs)]
 #[allow(non_camel_case_types)]
@@ -445,7 +445,7 @@ fn load_test() {
         assert_eq!(data, image2.data());
         Ok(())
     })()
-        .unwrap()
+    .unwrap()
 }
 
 #[test]
@@ -461,12 +461,14 @@ fn sym_test() {
             "main",
             "__libc_csu_init",
             "__libc_csu_fini",
-        ].iter()
-            .map(|x| x.to_string())
-            .collect();
+        ]
+        .iter()
+        .map(|x| x.to_string())
+        .collect();
         assert_eq!(sym_names, expected_names);
         Ok(())
-    }).unwrap()
+    })
+    .unwrap()
 }
 
 impl<'a> SegmentSequence<'a> {
@@ -944,8 +946,8 @@ pub enum ExpressionTag {
 
 impl ExpressionTag {
     fn from_bap(tag: bap_sys::bap_exp_tag_t) -> Option<ExpressionTag> {
-        use bap_sys::bap_exp_tag_t::*;
         use self::ExpressionTag::*;
+        use bap_sys::bap_exp_tag_t::*;
         match tag {
             BAP_EXP_TAG_INVALID => None,
             BAP_EXP_TAG_UNOP => Some(UnOp),
@@ -976,8 +978,8 @@ pub enum UnOp {
 
 impl UnOp {
     fn from_bap(op: bap_sys::bap_unop_t) -> Option<UnOp> {
-        use bap_sys::bap_unop_t::*;
         use self::UnOp::*;
+        use bap_sys::bap_unop_t::*;
         match op {
             BAP_UNOP_INVALID => None,
             BAP_UNOP_NOT => Some(Not),
@@ -1075,8 +1077,8 @@ pub enum Cast {
 
 impl Cast {
     fn from_bap(cast: bap_sys::bap_cast_t) -> Option<Self> {
-        use bap_sys::bap_cast_t::*;
         use self::Cast::*;
+        use bap_sys::bap_cast_t::*;
         match cast {
             BAP_CAST_INVALID => None,
             BAP_CAST_LOW => Some(Low),
@@ -1099,8 +1101,8 @@ pub enum Endian {
 
 impl Endian {
     fn from_bap(endian: bap_sys::bap_endian_t) -> Option<Self> {
-        use bap_sys::bap_endian_t::*;
         use self::Endian::*;
+        use bap_sys::bap_endian_t::*;
         match endian {
             BAP_ENDIAN_INVALID => None,
             BAP_ENDIAN_LITTLE => Some(Little),
@@ -1244,8 +1246,8 @@ pub enum TypeTag {
 
 impl TypeTag {
     fn from_bap(tag: bap_sys::bap_type_tag_t) -> Option<Self> {
-        use bap_sys::bap_type_tag_t::*;
         use self::TypeTag::*;
+        use bap_sys::bap_type_tag_t::*;
         match tag {
             BAP_TYPE_TAG_INVALID => None,
             BAP_TYPE_TAG_MEM => Some(Memory),
@@ -1364,7 +1366,8 @@ pub fn roots<'a>(data: &[u8]) -> Vec<Word<'a>> {
         let proj = bap_error(bap_sys::bap_project_create(
             proj_input,
             (&mut proj_args) as *mut bap_sys::bap_project_parameters_t,
-        )).unwrap();
+        ))
+        .unwrap();
         let symtab = bap_sys::bap_project_symbols(proj);
         let seq = bap_sys::bap_symbtab_enum(symtab);
         let seq_iter = bap_sys::bap_symbtab_fn_seq_iterator_create(seq);

@@ -14,7 +14,7 @@ json = ["rustc-serialize"]
 [dependencies]
 bap-sys = {path = "./bap-sys", version = "0.1"}
 bit-vec = "0.4"
-lazy_static = "0.2"
+lazy_static = "1.4"
 enum_primitive = "0.1"
 num = "0.1"
 mktemp = "0.3"

@@ -1,12 +1,12 @@
 use std::fmt::{Display, Error, Formatter};
 use std::result::Result;
-use basic::Arch;
-use high::bitvector::BitVector;
-use high::bil::{Type, Variable};
+use crate::basic::Arch;
+use crate::high::bitvector::BitVector;
+use crate::high::bil::{Type, Variable};
 
 impl Display for Arch {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        use basic::Arch::*;
+        use crate::basic::Arch::*;
         match *self {
             X86 => write!(f, "x86"),
             X86_64 => write!(f, "x86_64"),

@@ -1,12 +1,12 @@
 //! This module provides utilities for working with a native rust form of BIL
-pub use basic::BinOp;
-pub use basic::UnOp;
-pub use basic::Endian;
-pub use basic::Arch;
-pub use basic::Cast;
-pub use basic::BitSize;
+pub use crate::basic::BinOp;
+pub use crate::basic::UnOp;
+pub use crate::basic::Endian;
+pub use crate::basic::Arch;
+pub use crate::basic::Cast;
+pub use crate::basic::BitSize;
 pub use super::bitvector::BitVector;
-use basic;
+use crate::basic;
 
 /// Native representation of a BIL statement
 #[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq)]
@@ -56,7 +56,7 @@ fn stmts(stmts: Option<basic::StatementSequence>) -> Vec<Statement> {
 impl Statement {
     /// Create a native statement from a BAP one
     pub fn from_basic(stmt: &basic::Statement) -> Statement {
-        use basic::StatementTag;
+        use crate::basic::StatementTag;
         use self::Statement::*;
         match stmt.tag().unwrap() {
             StatementTag::Move => Move {
@@ -188,7 +188,7 @@ fn exp(e: Option<basic::Expression>) -> Box<Expression> {
 impl Expression {
     /// Creates a native `Expression` from a BAP representation
     pub fn from_basic(e: &basic::Expression) -> Self {
-        use basic::ExpressionTag;
+        use crate::basic::ExpressionTag;
         use self::Expression::*;
         match e.tag().unwrap() {
             ExpressionTag::UnOp => UnOp {
@@ -295,7 +295,7 @@ pub enum Type {
 impl Type {
     /// Extract a basic BAP type to a native one
     pub fn from_basic(type_: &basic::Type) -> Self {
-        use basic::TypeTag;
+        use crate::basic::TypeTag;
         match type_.tag().unwrap() {
             TypeTag::Memory => Type::Memory {
                 addr_size: type_.addr_size().unwrap(),
