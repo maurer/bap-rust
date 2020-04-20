@@ -362,11 +362,12 @@ impl<'a> Image<'a> {
     /// Create an `Image` from a file's contents
     pub fn from_data(_bap: &'a Bap, data: &'a [u8]) -> Result<Self> {
         unsafe {
+            let llvm_backend = CString::new("llvm").unwrap();
             Ok(Image {
                 bap_sys: bap_error(bap_sys::bap_image_of_data(
                     data.as_ptr() as *mut char,
                     data.len() as size_t,
-                    null_mut(),
+                    llvm_backend.as_ptr() as *mut char,
                 ))?,
                 rc: rc1(),
                 extra: ImageBacking {
@@ -1262,7 +1263,7 @@ impl TypeTag {
         use self::TypeTag::*;
         use bap_sys::bap_type_tag_t::*;
         match tag {
-            BAP_TYPE_TAG_INVALID => None,
+            BAP_TYPE_TAG_INVALID | BAP_TYPE_TAG_UNK => None,
             BAP_TYPE_TAG_MEM => Some(Memory),
             BAP_TYPE_TAG_IMM => Some(Immediate),
         }
